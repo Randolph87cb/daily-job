@@ -1,0 +1,46 @@
+{
+  "heading_map": {
+    "Problem Statement": "题目描述",
+    "Constraints": "约束条件",
+    "Input": "输入",
+    "Output": "输出",
+    "Input/Output": "输入输出",
+    "Notes": "注意事项"
+  },
+  "exact_line_map": {
+    "The input is given from Standard Input in the following format:": "输入从标准输入按如下格式给出：",
+    "Output the answer.": "输出答案。"
+  },
+  "prefix_map": {
+    "Source: ": "来源：",
+    "Score: ": "分值："
+  },
+  "phrase_map": {
+    " points": " 分",
+    "Sample Input ": "样例输入 ",
+    "Sample Output ": "样例输出 ",
+    "Yes": "Yes",
+    "No": "No"
+  },
+  "term_map": {
+    "sequence": "序列",
+    "sequences": "序列",
+    "positive integer": "正整数",
+    "positive integers": "正整数",
+    "non-negative integer": "非负整数",
+    "non-negative integers": "非负整数",
+    "distinct integer": "不同整数",
+    "distinct integers": "不同整数",
+    "permutation": "排列",
+    "permutations": "排列",
+    "subsequence": "子序列",
+    "constraints": "约束条件",
+    "interactive problem": "交互题",
+    "sample input": "样例输入",
+    "sample output": "样例输出",
+    "standard input": "标准输入",
+    "standard output": "标准输出",
+    "bucket": "桶",
+    "buckets": "桶"
+  }
+}

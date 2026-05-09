@@ -1,0 +1,17 @@
+{
+  "name": "atcoder-arc218",
+  "version": "1.0.0",
+  "description": "这个目录现在包含“抓取英文题面”和“翻译成中文”的基础框架，先保证流程可跑，再逐步优化翻译质量。",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "dependencies": {
+    "jsdom": "^29.1.1",
+    "turndown": "^7.2.4"
+  }
+}

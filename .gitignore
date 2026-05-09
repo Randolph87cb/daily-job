@@ -1,0 +1,10 @@
+.env
+.tmp/
+.playwright-mcp/
+**/.tmp/
+**/__pycache__/
+**/*.pyc
+**/node_modules/
+**/*.log
+Thumbs.db
+desktop.ini

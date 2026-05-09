@@ -1,0 +1,4 @@
+interface:
+  display_name: "签到表月度维护"
+  short_description: "批量把签到表切换到新月份并按班级调整学生名单，保留 Excel 原格式。"
+  default_prompt: "使用这个 skill 更新当前目录的签到表：切换月份、增删学生，并核对结果。"
