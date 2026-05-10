@@ -1,11 +1,5 @@
 # ABC457 E - Crossing Table Cloth 题解
 
-## 题目信息
-
-- 原题链接：[E - Crossing Table Cloth](https://atcoder.jp/contests/abc457/tasks/abc457_e)
-- 题面对照：[../zh-CN/abc457_e.zh-CN.md](../zh-CN/abc457_e.zh-CN.md)
-- 分值：475
-
 ## 题意概括
 
 有 $M$ 块布，第 $i$ 块布恰好覆盖区间 $[L_i, R_i]$。

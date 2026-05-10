@@ -44,6 +44,17 @@
 - 如果只是临时调试，不修改正式结构；如果新增了会长期保留的目录，必须补进目录结构说明。
 - 更新目录结构时，文档里的路径、示例命令、输出位置说明要一起校对，不允许只改代码不改文档。
 
+## AtCoder 题解产物约定
+
+- `atcoder-output/<contest>/editorials/` 目录当前除了单题题解 Markdown 外，还可以包含：
+  - 单题 PDF，例如 `A.pdf`
+  - 合并版 Markdown，例如 `<contest>.editorials.md`
+  - 合并版 PDF，例如 `<CONTEST>-editorials.pdf`
+- 如果题解目录中的产物命名或导出方式发生变化，至少同步更新：
+  - `README.md`
+  - 当前文件 `AGENTS.md`
+  - `atcoder-output/题解撰写要求.md`
+
 ## 临时文件与忽略规则
 
 - 提交前清理一次性临时产物，重点包括：

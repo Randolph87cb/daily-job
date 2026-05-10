@@ -1,11 +1,5 @@
 # ABC457 D - Raise Minimum 题解
 
-## 题目信息
-
-- 原题链接：[D - Raise Minimum](https://atcoder.jp/contests/abc457/tasks/abc457_d)
-- 题面对照：[../zh-CN/abc457_d.zh-CN.md](../zh-CN/abc457_d.zh-CN.md)
-- 分值：400
-
 ## 题意概括
 
 给定一个长度为 $N$ 的序列 $A$ 和整数 $K$。

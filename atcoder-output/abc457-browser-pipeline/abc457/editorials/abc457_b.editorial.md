@@ -1,11 +1,5 @@
 # ABC457 B - Arrays 题解
 
-## 题目信息
-
-- 原题链接：[B - Arrays](https://atcoder.jp/contests/abc457/tasks/abc457_b)
-- 题面对照：[../zh-CN/abc457_b.zh-CN.md](../zh-CN/abc457_b.zh-CN.md)
-- 分值：200
-
 ## 题意概括
 
 给定 $N$ 个序列 $A_1, A_2, \ldots, A_N$，其中每个序列的长度都可能不同。最后给出 `X` 和 `Y`，要求输出 $A_{X,Y}$。

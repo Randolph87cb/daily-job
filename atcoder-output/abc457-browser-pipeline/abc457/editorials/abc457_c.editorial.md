@@ -1,11 +1,5 @@
 # ABC457 C - Long Sequence 题解
 
-## 题目信息
-
-- 原题链接：[C - Long Sequence](https://atcoder.jp/contests/abc457/tasks/abc457_c)
-- 题面对照：[../zh-CN/abc457_c.zh-CN.md](../zh-CN/abc457_c.zh-CN.md)
-- 分值：300
-
 ## 题意概括
 
 给定 $N$ 个序列 $A_1, A_2, \ldots, A_N$，以及对应的重复次数 $C_1, C_2, \ldots, C_N$。

@@ -1,11 +1,5 @@
 # ABC457 G - Catch All Apples 题解
 
-## 题目信息
-
-- 原题链接：[G - Catch All Apples](https://atcoder.jp/contests/abc457/tasks/abc457_g)
-- 题面对照：[../zh-CN/abc457_g.zh-CN.md](../zh-CN/abc457_g.zh-CN.md)
-- 分值：625
-
 ## 题意概括
 
 数轴上有 $N$ 个苹果，第 $i$ 个苹果会在时刻 $T_i$ 掉到坐标 $X_i$。

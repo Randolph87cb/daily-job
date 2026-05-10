@@ -1,11 +1,5 @@
 # ABC457 F - Second Gap 题解
 
-## 题目信息
-
-- 原题链接：[F - Second Gap](https://atcoder.jp/contests/abc457/tasks/abc457_f)
-- 题面对照：[../zh-CN/abc457_f.zh-CN.md](../zh-CN/abc457_f.zh-CN.md)
-- 分值：525
-
 ## 题意概括
 
 给定长度为 $N - 1$ 的数组 $D$，要求统计有多少个排列 $P$ 满足：

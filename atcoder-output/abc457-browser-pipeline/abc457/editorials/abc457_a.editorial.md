@@ -1,11 +1,5 @@
 # ABC457 A - Array 题解
 
-## 题目信息
-
-- 原题链接：[A - Array](https://atcoder.jp/contests/abc457/tasks/abc457_a)
-- 题面对照：[../zh-CN/abc457_a.zh-CN.md](../zh-CN/abc457_a.zh-CN.md)
-- 分值：100
-
 ## 题意概括
 
 给定一个长度为 `N` 的序列 $A$，再给定一个位置 `X`，输出 $A_X$ 的值。

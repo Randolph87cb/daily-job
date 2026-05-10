@@ -253,3 +253,52 @@
     - `abc457_e.editorial.md` 通过
     - `abc457_f.editorial.md` 通过
     - `abc457_g.editorial.md` 通过
+
+## 2026-05-10 补充更新：删除题目信息段并导出 ABC457 题解 PDF
+
+- 用户追加要求：
+  - `ABC457` 的题解里删除 `## 题目信息` 一栏
+  - 导出每题 PDF
+  - 额外生成一份合并版 Markdown 和合并版 PDF
+- 本次结构调整：
+  - `ABC457` 七篇题解统一删除了 `## 题目信息` 段及其下方条目
+  - 题解固定结构同步改成：
+    - 标题
+    - `## 题意概括`
+    - `## 解题思路`
+    - `## 正确性说明`
+    - `## 复杂度`
+    - `## 参考实现（C++，遵守代码规范）`
+- 本次更新的规则文档：
+  - `D:\workspace\daily-job\README.md`
+  - `D:\workspace\daily-job\AGENTS.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 本次修改的题解文件：
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_d.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_e.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_f.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_g.editorial.md`
+- 本次新增导出产物：
+  - 单题 PDF：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\A.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\B.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\C.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\D.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\E.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\F.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\G.pdf`
+  - 合并版：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457.editorials.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\ABC457-editorials.pdf`
+- 合并版处理方式：
+  - 在合并 Markdown 顶部添加 `# ABC457 题解合集`
+  - 各题之间插入 `<div style="page-break-after: always;"></div>`，方便 `md2pdf` 分页
+- 验证：
+  - 用 `Select-String '^## 题目信息$'` 检查七篇题解，结果为空
+  - 抽查七篇文件开头，均为标题后直接进入 `## 题意概括`
+  - 使用本机 `md2pdf` 成功导出 `A.pdf` 到 `G.pdf`
+  - 使用本机 `md2pdf` 成功导出合并版 `ABC457-editorials.pdf`
+  - 导出过程中产生的根目录 `.tmp\md2pdf` 缓存已清理
