@@ -65,3 +65,17 @@
     - 4 空格缩进
     - 关键输入 / 处理 / 输出注释
     - 尽量使用与题面一致的变量含义和下标习惯
+
+## 2026-05-10 补充更新：按纯 Markdown 方式重写表达
+
+- 用户追加要求：
+  - 题解需要满足更通用的 Markdown 格式，而不是依赖数学公式渲染。
+- 已完成修改：
+  - 重写以下文件中的公式和下标表达：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+- 调整方式：
+  - 将 `A_{X,Y}`、`\sum L_i` 这类依赖 LaTeX 渲染的写法改为普通文字或反引号代码。
+  - 保留标题、列表、代码块等标准 Markdown 结构不变。
+  - 让三篇题解在普通 Markdown 查看器中也能稳定阅读。
