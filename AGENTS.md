@@ -15,6 +15,7 @@
 ├─ .codex/
 │  └─ skills/
 │     ├─ atcoder-statement-bilingual-pdf/
+│     ├─ atcoder-editorial-workflow/
 │     ├─ attendance-sheet-monthly-update/
 │     └─ class-hours-statistics/
 ├─ AI工作记录/

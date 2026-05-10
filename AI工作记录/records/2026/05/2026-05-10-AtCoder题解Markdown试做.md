@@ -325,3 +325,47 @@
   - 用 `Select-String '^## 参考实现$'` 检查七篇单题题解，均命中
   - 检查合并版 `abc457.editorials.md`，七处对应章节标题也都已更新
   - 使用本机 `md2pdf` 成功重新导出全部单题 PDF 与合并版 PDF
+
+## 2026-05-10 补充更新：总结题解流程并沉淀为项目内 skill
+
+- 用户要求：
+  - 总结刚刚形成的题解工作流
+  - 把流程变化同步回 `题解撰写要求.md` 与 `代码规范.md`
+  - 做成放在 `.codex` 里的项目内 skill
+  - 文档放在 skill 目录中
+- 本次新增 skill：
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\SKILL.md`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\workflow.md`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\agents\openai.yaml`
+- 本次同步更新的项目文档：
+  - `D:\workspace\daily-job\README.md`
+  - `D:\workspace\daily-job\AGENTS.md`
+  - `D:\workspace\daily-job\AI工作记录\skill-backlog.md`
+  - `D:\workspace\daily-job\代码规范.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 这次固化下来的流程要点：
+  - 统一模板或风格变化时，先改规则文档，再批量改单题题解
+  - 单题题解改完后，再重生成：
+    - 单题 PDF
+    - 合并版 Markdown
+    - 合并版 PDF
+  - `## 题目信息` 已移除
+  - `## 参考实现` 保持简短标题
+  - 公式统一用 `$...$`
+  - 示例代码优先普通数组与全局数组；保留容器时要解释原因
+  - 导出时优先进入 `editorials/` 目录，用相对文件名调用 `md2pdf`
+- skill 中新增脚本用途：
+  - `export-editorials.ps1` 会自动识别 `*.editorial.md`
+  - 输出单题 PDF 为 `A.pdf`、`B.pdf` ...
+  - 输出合并版为 `<contest>.editorials.md` 与 `<CONTEST>-editorials.pdf`
+  - 导出完成后自动清理 `editorials/.tmp`
+- 验证：
+  - 运行：
+    - `python -X utf8 C:\Users\Administrator\.codex\skills\.system\skill-creator\scripts\quick_validate.py D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow`
+  - 结果：
+    - `Skill is valid!`
+  - 运行：
+    - `powershell -ExecutionPolicy Bypass -File D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1 -EditorialDir D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials`
+  - 结果：
+    - 成功重导 `ABC457` 的单题 PDF 与合并版 Markdown/PDF
