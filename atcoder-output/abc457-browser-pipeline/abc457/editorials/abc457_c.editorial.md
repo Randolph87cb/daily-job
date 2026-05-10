@@ -23,6 +23,19 @@
 
 不能真的把整个序列 `B` 构造出来，因为它的长度可能非常大。
 
+另外，虽然每个序列长度不同，但题目保证所有 $L_i$ 的总和不超过 $2 \times 10^5$，所以原始序列 $A_i$ 本身可以先用普通数组存下来。
+
+我们仍然把所有 $A_i$ 的元素按输入顺序压进一个大数组中：
+
+- `a[p]` 表示压平后第 `p` 个位置上的数
+- `st[i]` 表示第 `i` 个序列在大数组中的起始位置
+- `l[i]` 表示第 `i` 个序列的长度
+- `c[i]` 表示第 `i` 个序列要重复多少次
+
+这样，第 `i` 个序列中的第 `j` 个数就是：
+
+$a[st[i] + j - 1]$
+
 关键观察是：
 
 - 第 $i$ 组在 $B$ 中一共贡献了 $C_i \times L_i$ 个元素
@@ -54,6 +67,10 @@ $pos = (K - 1) \bmod L_i + 1$
 
 最后输出 $A_{i,pos}$ 即可。
 
+而在数组里取这个值时，对应的位置就是：
+
+$a[st[i] + pos - 1]$
+
 ## 正确性说明
 
 第 $i$ 组由序列 $A_i$ 连续重复 $C_i$ 次组成，因此它在总序列 $B$ 中恰好占据连续的 $C_i \times L_i$ 个位置。
@@ -71,7 +88,11 @@ $pos = (K - 1) \bmod L_i + 1$
 
 $(K - 1) \bmod L_i + 1$
 
-输出 $A_{i,((K - 1) \bmod L_i + 1)}$，恰好就是总序列中的第 $K$ 个元素，所以算法正确。
+再结合压平数组中的起始位置 `st[i]`，输出的就是：
+
+$a[st[i] + ((K - 1) \bmod L_i + 1) - 1]$
+
+它恰好对应总序列中的第 $K$ 个元素，所以算法正确。
 
 ## 复杂度
 
@@ -86,6 +107,13 @@ $(K - 1) \bmod L_i + 1$
 #include<bits/stdc++.h>
 using namespace std;
 
+const int MAXN = 200000 + 5;
+
+int a[MAXN];
+int st[MAXN];
+int l[MAXN];
+long long c[MAXN];
+
 int main(){
 
     // 读取序列个数和目标位置
@@ -93,22 +121,23 @@ int main(){
     long long k;
     cin >> n >> k;
 
-    // a[i][j] 表示第 i 个序列中的第 j 个数
-    vector<vector<int>> a(n + 1);
-    vector<int> l(n + 1, 0);
+    // tot 表示大数组当前已经存了多少个数
+    int tot = 0;
 
     // 读入所有序列
     for(int i=1; i<=n; i++){
         cin >> l[i];
-        a[i].resize(l[i] + 1);
+
+        // 记录第 i 个序列在大数组中的起始位置
+        st[i] = tot + 1;
 
         for(int j=1; j<=l[i]; j++){
-            cin >> a[i][j];
+            tot++;
+            cin >> a[tot];
         }
     }
 
     // 读入每个序列的重复次数
-    vector<long long> c(n + 1, 0);
     for(int i=1; i<=n; i++){
         cin >> c[i];
     }
@@ -121,8 +150,8 @@ int main(){
             k -= block_len;
         } else {
             // 计算这一组内部对应到 A_i 的哪个位置
-            long long pos = (k - 1) % l[i] + 1;
-            cout << a[i][pos];
+            int pos = (int)((k - 1) % l[i] + 1);
+            cout << a[st[i] + pos - 1];
             break;
         }
     }
