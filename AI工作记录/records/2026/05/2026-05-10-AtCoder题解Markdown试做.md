@@ -338,6 +338,10 @@
   - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\workflow.md`
   - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1`
   - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\agents\openai.yaml`
+- 后续补充调整：
+  - 与该 skill 直接相关的规则文档已移动到：
+    - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\题解撰写要求.md`
+    - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\代码规范.md`
 - 本次同步更新的项目文档：
   - `D:\workspace\daily-job\README.md`
   - `D:\workspace\daily-job\AGENTS.md`

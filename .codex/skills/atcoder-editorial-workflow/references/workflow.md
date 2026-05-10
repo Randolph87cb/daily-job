@@ -27,8 +27,8 @@ atcoder-output/<contest>/editorials/
 
 如果用户要求修改的是“题解统一写法”，先改这两个文件，再批量动单题：
 
-- `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
-- `D:\workspace\daily-job\代码规范.md`
+- `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\题解撰写要求.md`
+- `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\代码规范.md`
 
 典型触发场景：
 
