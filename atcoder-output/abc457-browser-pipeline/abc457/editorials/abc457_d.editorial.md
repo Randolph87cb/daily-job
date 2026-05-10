@@ -87,7 +87,7 @@ $\left\lfloor \dfrac{X - A_i + i - 1}{i} \right\rfloor$
 - 时间复杂度：$O(N \log V)$，其中 $V$ 是答案的取值范围，这里二分的上界可以取到 $A_1 + K$
 - 空间复杂度：$O(N)$
 
-## 参考实现（C++，遵守代码规范）
+## 参考实现
 
 ```cpp
 #include<bits/stdc++.h>

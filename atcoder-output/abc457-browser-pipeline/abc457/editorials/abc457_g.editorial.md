@@ -119,7 +119,7 @@
 
 其中排序需要 $O(N \log N)$，`multiset` 的每次插入、删除、查找都是 $O(\log N)$。
 
-## 参考实现（C++，遵守代码规范）
+## 参考实现
 
 ```cpp
 #include<bits/stdc++.h>

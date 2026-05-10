@@ -302,3 +302,26 @@
   - 使用本机 `md2pdf` 成功导出 `A.pdf` 到 `G.pdf`
   - 使用本机 `md2pdf` 成功导出合并版 `ABC457-editorials.pdf`
   - 导出过程中产生的根目录 `.tmp\md2pdf` 缓存已清理
+
+## 2026-05-10 补充更新：将“参考实现”标题改短并重新导出
+
+- 用户追加要求：
+  - 把 `## 参考实现（C++，遵守代码规范）` 统一改成 `## 参考实现`
+  - 重新导出 Markdown / PDF 产物
+- 本次修改：
+  - 更新 `ABC457` 七篇单题题解中的该章节标题
+  - 更新 `D:\workspace\daily-job\atcoder-output\题解撰写要求.md` 中的固定结构说明
+  - 重新生成：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457.editorials.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\A.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\B.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\C.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\D.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\E.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\F.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\G.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\ABC457-editorials.pdf`
+- 验证：
+  - 用 `Select-String '^## 参考实现$'` 检查七篇单题题解，均命中
+  - 检查合并版 `abc457.editorials.md`，七处对应章节标题也都已更新
+  - 使用本机 `md2pdf` 成功重新导出全部单题 PDF 与合并版 PDF
