@@ -87,15 +87,21 @@
 
 为了支持上面的判定，可以预处理：
 
-- `cnt[(L, R)]`：区间 $[L, R]$ 出现了多少次；
-- `by_l[L]`：所有左端为 `L` 的布的右端集合，并排序；
-- `by_r[R]`：所有右端为 `R` 的布的左端集合，并排序；
+- `cloth_by_l[i]`：把所有布按 `(L_i, R_i)` 排序后的结果；
+- `cloth_by_r[i]`：把所有布按 `(R_i, L_i)` 排序后的结果；
+- `first_by_l[L]`、`last_by_l[L]`：左端恰好为 `L` 的布，在 `cloth_by_l` 中对应的连续区间；
+- `first_by_r[R]`、`last_by_r[R]`：右端恰好为 `R` 的布，在 `cloth_by_r` 中对应的连续区间；
+- `min_r_at_l[i]`：左端恰好为 `i` 的布中，最小右端；
 - `suf_min_r[i]`：左端至少为 `i` 的布中，最小右端。
 
 每次询问时：
 
-- 若 `cnt[(S, T)] > 0`，按情况一判定；
-- 否则，按情况二在 `by_l[S]`、`by_r[T]` 中二分出最优候选，再检查能否拼起来。
+- 先在 `cloth_by_l` 里，找到左端为 `S` 的那一段，再二分统计右端恰好等于 `T` 的布有多少块；
+- 若这个数量大于 `0`，按情况一判定；
+- 否则，继续在左端为 `S` 的那一段里二分出最大的可用右端，在右端为 `T` 的那一段里二分出最小的可用左端，再检查能否拼起来。
+
+由于所有端点都落在 $1 \sim N$ 内，本题最终不需要 `vector`、`map` 这类容器。  
+直接把所有布分别排成两个全局数组，再用“某个左端 / 右端在排序数组中的起止位置”来做二分，既满足数组写法，也和题解中的判定过程完全对应。
 
 ## 正确性说明
 
@@ -143,7 +149,132 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+const int MAXN = 200000 + 5;
 const int INF = (int)1e9;
+
+struct ClothByLeft{
+    int l, r;
+} cloth_by_l[MAXN];
+
+struct ClothByRight{
+    int r, l;
+} cloth_by_r[MAXN];
+
+// first_by_l[l], last_by_l[l] 表示左端为 l 的布，在排序数组中的范围
+// first_by_r[r], last_by_r[r] 表示右端为 r 的布，在排序数组中的范围
+int first_by_l[MAXN];
+int last_by_l[MAXN];
+int first_by_r[MAXN];
+int last_by_r[MAXN];
+
+// min_r_at_l[l] = 左端恰好为 l 的布中，最小的右端
+// suf_min_r[l] = 左端至少为 l 的布中，最小的右端
+int min_r_at_l[MAXN];
+int suf_min_r[MAXN];
+
+bool cmp_left(ClothByLeft a, ClothByLeft b){
+
+    if(a.l != b.l){
+        return a.l < b.l;
+    }
+    return a.r < b.r;
+}
+
+bool cmp_right(ClothByRight a, ClothByRight b){
+
+    if(a.r != b.r){
+        return a.r < b.r;
+    }
+    return a.l < b.l;
+}
+
+// 在 [left, right] 这一段里，找第一个右端 >= target 的位置
+int first_r_ge(int left, int right, int target){
+
+    int ans = right + 1;
+    while(left <= right){
+        int mid = (left + right) / 2;
+        if(cloth_by_l[mid].r >= target){
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+// 在 [left, right] 这一段里，找第一个右端 > target 的位置
+int first_r_gt(int left, int right, int target){
+
+    int ans = right + 1;
+    while(left <= right){
+        int mid = (left + right) / 2;
+        if(cloth_by_l[mid].r > target){
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+// 在 [left, right] 这一段里，找第一个左端 >= target 的位置
+int first_l_ge(int left, int right, int target){
+
+    int ans = right + 1;
+    while(left <= right){
+        int mid = (left + right) / 2;
+        if(cloth_by_r[mid].l >= target){
+            ans = mid;
+            right = mid - 1;
+        } else {
+            left = mid + 1;
+        }
+    }
+    return ans;
+}
+
+// 统计区间 [l, r] 一共出现了多少次
+int count_exact(int l, int r){
+
+    if(first_by_l[l] == 0){
+        return 0;
+    }
+
+    int left = first_r_ge(first_by_l[l], last_by_l[l], r);
+    int right = first_r_gt(first_by_l[l], last_by_l[l], r);
+    return right - left;
+}
+
+// 找左端为 l 且右端 <= limit_r 的布里，右端最大的一个
+int get_rightmost(int l, int limit_r){
+
+    if(first_by_l[l] == 0){
+        return -1;
+    }
+
+    int pos = first_r_gt(first_by_l[l], last_by_l[l], limit_r) - 1;
+    if(pos < first_by_l[l]){
+        return -1;
+    }
+    return cloth_by_l[pos].r;
+}
+
+// 找右端为 r 且左端 >= limit_l 的布里，左端最小的一个
+int get_leftmost(int r, int limit_l){
+
+    if(first_by_r[r] == 0){
+        return INF;
+    }
+
+    int pos = first_l_ge(first_by_r[r], last_by_r[r], limit_l);
+    if(pos > last_by_r[r]){
+        return INF;
+    }
+    return cloth_by_r[pos].l;
+}
 
 int main(){
 
@@ -154,34 +285,40 @@ int main(){
     int n, m;
     cin >> n >> m;
 
-    // by_l[l] 存所有左端为 l 的布的右端
-    // by_r[r] 存所有右端为 r 的布的左端
-    vector<vector<int>> by_l(n + 2), by_r(n + 2);
-
-    // cnt[(l, r)] 记录区间 [l, r] 出现次数
-    map<pair<int, int>, int> cnt;
-
-    // min_r_at_l[l] 记录左端恰好为 l 的布中最小的右端
-    vector<int> min_r_at_l(n + 2, INF);
+    for(int i=1; i<=n + 1; i++){
+        min_r_at_l[i] = INF;
+    }
 
     for(int i=1; i<=m; i++){
         int l, r;
         cin >> l >> r;
 
-        by_l[l].push_back(r);
-        by_r[r].push_back(l);
-        cnt[{l, r}]++;
+        cloth_by_l[i] = {l, r};
+        cloth_by_r[i] = {r, l};
         min_r_at_l[l] = min(min_r_at_l[l], r);
     }
 
-    // 对同左端 / 同右端的候选做排序，便于二分
-    for(int i=1; i<=n; i++){
-        sort(by_l[i].begin(), by_l[i].end());
-        sort(by_r[i].begin(), by_r[i].end());
+    // 把所有布分别按 (左端, 右端) 和 (右端, 左端) 排序
+    sort(cloth_by_l + 1, cloth_by_l + m + 1, cmp_left);
+    sort(cloth_by_r + 1, cloth_by_r + m + 1, cmp_right);
+
+    // 记录每个左端 / 右端在排序数组中的连续区间
+    for(int i=1; i<=m; i++){
+        int l = cloth_by_l[i].l;
+        if(first_by_l[l] == 0){
+            first_by_l[l] = i;
+        }
+        last_by_l[l] = i;
+
+        int r = cloth_by_r[i].r;
+        if(first_by_r[r] == 0){
+            first_by_r[r] = i;
+        }
+        last_by_r[r] = i;
     }
 
     // suf_min_r[i] = 左端至少为 i 的所有布中，最小的右端
-    vector<int> suf_min_r(n + 3, INF);
+    suf_min_r[n + 1] = INF;
     for(int i=n; i>=1; i--){
         suf_min_r[i] = min(suf_min_r[i + 1], min_r_at_l[i]);
     }
@@ -195,10 +332,11 @@ int main(){
         cin >> s >> t;
 
         bool ok = false;
+        int same_cnt = count_exact(s, t);
 
         // 情况一：存在一块布恰好为 [s, t]
-        if(cnt[{s, t}] > 0){
-            if(cnt[{s, t}] >= 2){
+        if(same_cnt > 0){
+            if(same_cnt >= 2){
                 ok = true;
             }
             if(s + 1 <= n && suf_min_r[s + 1] <= t){
@@ -213,22 +351,8 @@ int main(){
         }
 
         // 情况二：不存在 [s, t]，需要从左端为 s 和右端为 t 的布中各选一块
-        int r1 = -1;
-        int l2 = INF;
-
-        // 找左端为 s 且右端 <= t 的布里，右端最大的
-        vector<int> &rs = by_l[s];
-        int pos_r = upper_bound(rs.begin(), rs.end(), t) - rs.begin() - 1;
-        if(pos_r >= 0){
-            r1 = rs[pos_r];
-        }
-
-        // 找右端为 t 且左端 >= s 的布里，左端最小的
-        vector<int> &ls = by_r[t];
-        int pos_l = lower_bound(ls.begin(), ls.end(), s) - ls.begin();
-        if(pos_l < (int)ls.size()){
-            l2 = ls[pos_l];
-        }
+        int r1 = get_rightmost(s, t);
+        int l2 = get_leftmost(t, s);
 
         // 两块布存在，且中间没有空隙，才能拼成 [s, t]
         if(r1 != -1 && l2 != INF && l2 <= r1 + 1){

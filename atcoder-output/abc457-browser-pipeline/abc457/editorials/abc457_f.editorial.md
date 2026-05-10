@@ -40,7 +40,7 @@
 3. $P_i$ 既不是最大值，也不是第二大值  
    此时新的前两大位置仍然是 $\{a, b\}$。
 
-### 2. 为什么只记录“最大值的位置”就够了
+### 2. 为什么只记录“最大值的位置”就够了，而且可以直接开数组
 
 朴素想法会想记录 $(a, b)$ 两个位置，但其实没必要。
 
@@ -54,6 +54,9 @@
 因此可以把状态压缩成：
 
 - $dp[i][a]$：表示后缀 $(P_i, \ldots, P_N)$ 中，最大值出现在位置 $a$ 的方案数。
+
+这里的状态下标本来就是“位置”，范围固定在 $1 \sim N$，所以没有必要使用哈希表或映射。  
+我们直接开普通数组，`dp[a]` 表示位置 `a` 这个状态的值即可。
 
 ### 3. 转移怎么写
 
@@ -115,7 +118,16 @@
 - 第三种转移只需要更新 `coef`
 - 第一、二种转移只对两个位置做单点修改
 
-最终总复杂度就能做到 $O(N)$。
+另外，当 $D_i \ne D_{i+1}$ 时，旧状态里只有位置 `j = i + D_i` 的值还会被用到，其余状态都会整体失效。  
+如果每次都把整个 `dp` 数组清零，也会退化成 $O(N^2)$。
+
+这时可以再配一个 `mark[a]` 数组和当前轮编号 `tag`：
+
+- `mark[a] = tag` 表示位置 `a` 这个状态在当前这一轮是有效的；
+- 需要“清空整张表”时，只要把 `tag` 加一；
+- 之后重新写入这轮真正会保留下来的少数状态即可。
+
+由于状态下标本来就是 $1 \sim N$，这种“数组 + 轮次标记 + 公共系数”的写法就足够了，不需要 `unordered_map`。
 
 ## 正确性说明
 
@@ -123,6 +135,8 @@
 
 我们定义 `dp[a]` 表示当前处理到某个后缀时，“最大值出现在位置 $a$”的方案数。  
 由于题目在每一层只关心最大值和第二大值之间的距离，而第二大值的位置在前两种转移中不需要单独知道，在第三种转移中又只会保持不变，因此只记录最大值位置就足够了。
+
+又因为这个位置一定落在 $1 \sim N$ 内，所以直接用普通数组按位置存状态，就是最自然的实现方式。
 
 ### 转移一、二正确
 
@@ -142,6 +156,13 @@
 
 第三种转移对所有状态都乘同一个值，因此把它抽成公共因子 `coef` 不会改变任何状态之间的相对关系，也不会影响第一、二种转移的正确性。最终再把所有状态和乘回 `coef`，就能得到真实答案。
 
+### 轮次标记正确
+
+当 $D_i \ne D_{i+1}$ 时，新一层只会保留由旧状态中位置 $j = i + D_i$ 转移出来的两个位置，其余位置全部失效。  
+此时把 `tag` 加一，相当于把旧轮次的状态整体作废；只有重新写入并标记为当前 `tag` 的位置，才会在之后继续参与转移。
+
+因此，`mark[a]` 只是在实现上避免整张数组反复清零，不会改变 DP 本身的状态集合，所以这种优化是正确的。
+
 综上，DP 的状态、转移和优化都正确，因此算法正确。
 
 ## 复杂度
@@ -155,21 +176,40 @@
 #include<bits/stdc++.h>
 using namespace std;
 
+const int MAXN = 200000 + 5;
 const long long MOD = 998244353;
 
-// 快速幂：计算 a^b mod MOD
-long long qpow(long long a, long long b){
+int d[MAXN];
+long long inv_num[MAXN];
+long long dp[MAXN];
+int mark[MAXN];
+int cur_tag;
 
-    long long res = 1;
-    while(b > 0){
-        if(b & 1){
-            res = res * a % MOD;
-        }
-        a = a * a % MOD;
-        b >>= 1;
+// 如果当前位置不是当前这一轮的有效状态，就返回 0
+long long get_value(int pos){
+
+    if(mark[pos] != cur_tag){
+        return 0;
+    }
+    return dp[pos];
+}
+
+// 给当前位置加上一个状态值
+void add_value(int pos, long long val){
+
+    if(val == 0){
+        return;
     }
 
-    return res;
+    if(mark[pos] != cur_tag){
+        mark[pos] = cur_tag;
+        dp[pos] = 0;
+    }
+
+    dp[pos] += val;
+    if(dp[pos] >= MOD){
+        dp[pos] -= MOD;
+    }
 }
 
 int main(){
@@ -182,49 +222,54 @@ int main(){
     cin >> n;
 
     // d[i] 表示第 i 层要求的距离
-    vector<int> d(n + 1, 0);
     for(int i=1; i<=n - 1; i++){
         cin >> d[i];
     }
 
-    // dp[pos] 表示去掉公共系数后，当前最大值位置为 pos 的方案数
-    unordered_map<int, long long> dp;
-    dp[n - 1] = 1;
-    dp[n] = 1;
+    // 预处理逆元，后面需要把单点新增量换算到新的公共系数下
+    inv_num[1] = 1;
+    for(int i=2; i<=n; i++){
+        inv_num[i] = (MOD - MOD / i) * inv_num[MOD % i] % MOD;
+    }
+
+    // 初始长度为 2 的后缀，最大值可以在 n - 1 或 n
+    cur_tag = 1;
+    add_value(n - 1, 1);
+    add_value(n, 1);
 
     // coef 记录所有状态共同乘上的系数
     long long coef = 1;
 
     for(int i=n - 2; i>=1; i--){
         int j = i + d[i];
-
-        long long v = 0;
-        if(dp.count(j)){
-            v = dp[j];
-        }
+        long long v = get_value(j);
 
         if(d[i] == d[i + 1]){
             // 第三种转移：所有状态统一乘上 ways
             long long ways = n - i - 1;
             coef = coef * ways % MOD;
 
-            // 由于 coef 变了，要把单点加法换算到新的系数下
-            long long add = v * qpow(ways, MOD - 2) % MOD;
-            dp[j] = (dp[j] + add) % MOD;
-            dp[i] = (dp[i] + add) % MOD;
+            // 把“成为最大值 / 第二大值”的新增量换算到新的公共系数下
+            long long add = v * inv_num[ways] % MOD;
+            add_value(j, add);
+            add_value(i, add);
         } else {
-            // 第三种转移不存在，旧状态全部失效，只保留前两种转移
-            unordered_map<int, long long> ndp;
-            ndp[j] = (ndp[j] + v) % MOD;
-            ndp[i] = (ndp[i] + v) % MOD;
-            dp.swap(ndp);
+            // 第三种转移不存在，上一轮状态整体作废
+            cur_tag++;
+            add_value(j, v);
+            add_value(i, v);
         }
     }
 
     // 把去掉的公共系数乘回去
     long long sum = 0;
-    for(auto [pos, val] : dp){
-        sum = (sum + val) % MOD;
+    for(int i=1; i<=n; i++){
+        if(mark[i] == cur_tag){
+            sum += dp[i];
+            if(sum >= MOD){
+                sum -= MOD;
+            }
+        }
     }
 
     long long ans = sum * coef % MOD;
