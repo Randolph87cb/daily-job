@@ -36,3 +36,32 @@
   - 如果接下来继续做第二、第三篇题解，优先验证是否都适合沿用这套结构。
   - 如果结构稳定，再考虑新增一个项目内 skill，把“读取题面 Markdown -> 生成题解草稿模板”的部分自动化。
   - 题解正文里的“思路、证明、代码”仍应保留人工补写入口，不建议一开始就追求全自动。
+
+## 2026-05-10 补充更新：切换到 ABC457 的 A / B / C
+
+- 用户新要求：
+  - 不继续做 `abc456` 的 `B`、`C`。
+  - 改为完成 `abc457` 的 `A`、`B`、`C` 三道题解。
+  - 参考实现统一改为 `C++`，并遵守项目内未入库的 `D:\workspace\daily-job\代码规范.md`。
+- 处理边界：
+  - `代码规范.md` 当前是工作区内未跟踪文件，本次仅将其作为写作约束来源，不把它纳入提交。
+  - 先撤回了刚才落在 `abc456` 题解上的未完成修改，避免混入这次交付。
+- 已完成修改：
+  - 新增：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+- 题解内容约束：
+  - 每篇均包含：
+    - 题目信息
+    - 题意概括
+    - 解题思路
+    - 正确性说明
+    - 复杂度
+    - `C++` 参考实现
+  - 代码遵循：
+    - `#include<bits/stdc++.h>`
+    - `int main(){`
+    - 4 空格缩进
+    - 关键输入 / 处理 / 输出注释
+    - 尽量使用与题面一致的变量含义和下标习惯
