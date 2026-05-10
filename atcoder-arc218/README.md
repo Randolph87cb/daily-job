@@ -119,6 +119,77 @@ python .\scripts\run_atcoder_pipeline.py --contest arc218 --provider openai --mo
 python .\scripts\run_atcoder_pipeline.py --contest arc218 --provider openai --api-mode chat --base-url https://api.openai.com/v1/chat/completions
 ```
 
+## 提交验证脚本
+
+`scripts/submit_atcoder_solution.py` 用来把本地参考代码真正提交到 AtCoder，并轮询直到拿到终态 verdict。它的目标不是替代在线评测页面，而是为“题解里的参考代码是否真的能过”提供一个可复用的本地验证入口。
+
+### 依赖
+
+- Python 3
+- `requests`
+- `lxml`
+- `browser-cookie3`
+
+安装示例：
+
+```powershell
+python -m pip install requests lxml browser-cookie3
+```
+
+### 认证方式
+
+- 优先支持本机浏览器登录态：
+  - 默认 `--auth-mode auto --browser-cookies auto`
+  - 会按 `chrome -> edge -> brave -> chromium -> firefox -> opera -> vivaldi` 顺序尝试读取 `atcoder.jp` Cookie
+- 支持显式用户名/密码登录作为备选：
+  - 传 `--auth-mode password --username <用户名> --password <密码>`
+  - 如果只传 `--username` 不传 `--password`，脚本会在运行时交互式读取密码
+
+### 常用命令
+
+先打印当前提交页可选语言：
+
+```powershell
+python .\scripts\submit_atcoder_solution.py --contest-id arc218 --task arc218_a --source-file .\samples\answer.py --language Python --print-languages
+```
+
+只做认证、任务和语言解析，不真正提交：
+
+```powershell
+python .\scripts\submit_atcoder_solution.py --contest-id arc218 --task arc218_a --source-file .\samples\answer.py --language "Python (CPython 3.11.4)" --dry-run
+```
+
+使用浏览器 Cookie 直接提交并轮询：
+
+```powershell
+python .\scripts\submit_atcoder_solution.py --contest-id arc218 --task arc218_a --source-file .\samples\answer.py --language 5078
+```
+
+强制使用用户名/密码登录后提交：
+
+```powershell
+python .\scripts\submit_atcoder_solution.py --contest-id arc218 --task arc218_a --source-file .\samples\answer.py --language "Python (CPython 3.11.4)" --auth-mode password --username your_name
+```
+
+### 输出
+
+真实提交时，脚本会在检测到新提交并进入终态后输出：
+
+- `submission_id`
+- `verdict`
+- `url`
+
+### 已知限制
+
+- 当前实现依赖 AtCoder 当前网页结构：
+  - 会动态解析提交页中的表单、CSRF、任务下拉框、语言下拉框和源码输入框
+  - 但如果 AtCoder 后续明显改版，脚本仍可能需要同步调整
+- 当前仓库环境下还不能做真实提交验证，原因是：
+  - 这台机器现在没有可直接复用的 AtCoder 浏览器登录 Cookie
+  - 本线程也没有提供可用于备选登录的 AtCoder 用户名/密码
+  - 因此只能完成脚本实现和本地静态检查，不能在 2026-05-10 这次会话里完成真实提交闭环
+- 轮询逻辑依赖“我的提交”列表中最新一条记录来识别本次提交；如果同一账号在极短时间内有并发提交，识别风险会上升
+
 ## 当前框架说明
 
 - 这版采集默认抓取英文题面，便于后续统一翻译成中文。
