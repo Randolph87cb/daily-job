@@ -206,3 +206,50 @@
   - 原因不是脚本缺失，而是缺少认证前提：
     - 当前机器没有可复用的 AtCoder 登录 Cookie
     - 当前线程也没有提供可用于密码登录的 AtCoder 用户名/密码
+
+## 2026-05-10 补充更新：收紧数组写法规范并批量调整 ABC457 题解
+
+- 用户追加要求：
+  - 能用数组的地方尽量用数组
+  - 数组定义尽量放到 `main` 外
+  - 面向学生的题解代码里，尽量避免让人一眼就被 `vector` 绕住
+- 本次先更新的规范文件：
+  - `D:\workspace\daily-job\代码规范.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 本次固化的新约束包括：
+  - 普通静态范围问题优先使用普通数组，不默认上 `vector`
+  - 大数组、状态数组、辅助数组优先定义在 `main` 外
+  - 只有普通数组明显不合适时，才允许保留 `vector`、`set`、`map`、`unordered_map`
+  - 若保留容器，题解正文里必须解释“为什么这里不能直接改成普通数组”
+- 本次委托执行：
+  - `B / C` 由 worker 批量调整为全局数组写法
+  - `E / F` 由 worker 收口，其中：
+    - `E` 改成纯数组 + 排序分段二分，不再保留 `vector`、`map`
+    - `F` 改成纯数组 DP，不再保留 `vector`、`unordered_map`
+  - `G` 由 worker 收口：
+    - 苹果数据改成全局数组
+    - 保留 `multiset`，并在正文中说明保留原因
+  - `A` 由 worker 单独补齐，把局部数组移到 `main` 外
+- 本次最终涉及的题解文件：
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_d.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_e.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_f.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_g.editorial.md`
+- 本轮主线程复核结论：
+  - `A / B / C / D / F` 已符合“普通数组优先 + 数组尽量放主函数外”
+  - `E` 的参考实现已改成纯数组，正文只保留“这里不需要 `vector` / `map`”的说明
+  - `G` 只保留一个 `multiset`，并已说明原因：需要在 $O(\log N)$ 内维护前驱、删除旧末尾并插入新末尾
+- 验证：
+  - 扫描 `ABC457` 七篇题解，确认没有残留不加说明的 `vector` / `unordered_map`
+  - 从七篇 Markdown 中提取 `cpp` 代码块，逐篇运行 `g++ -std=c++17 -fsyntax-only`
+  - 结果：
+    - `abc457_a.editorial.md` 通过
+    - `abc457_b.editorial.md` 通过
+    - `abc457_c.editorial.md` 通过
+    - `abc457_d.editorial.md` 通过
+    - `abc457_e.editorial.md` 通过
+    - `abc457_f.editorial.md` 通过
+    - `abc457_g.editorial.md` 通过
