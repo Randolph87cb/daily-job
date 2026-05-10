@@ -1,8 +1,8 @@
-# AtCoder 题解工作流细则
+# 题解工作流细则
 
 ## 1. 作用范围
 
-本 skill 面向当前项目中 AtCoder 题解的这一类任务：
+本 skill 面向当前项目中算法题题解的这一类任务：
 
 - 新增单题题解 Markdown
 - 批量修改题解章节标题、固定结构、公式写法
@@ -27,8 +27,8 @@ atcoder-output/<contest>/editorials/
 
 如果用户要求修改的是“题解统一写法”，先改这两个文件，再批量动单题：
 
-- `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\题解撰写要求.md`
-- `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\代码规范.md`
+- `references/题解撰写要求.md`
+- `references/代码规范.md`
 
 典型触发场景：
 
@@ -39,7 +39,7 @@ atcoder-output/<contest>/editorials/
 
 ## 3. 当前稳定下来的题解要求
 
-- 不保留 `## 题目信息`
+- 默认不保留单独的“题目信息”章节
 - 固定结构为：
   1. 标题
   2. `## 题意概括`

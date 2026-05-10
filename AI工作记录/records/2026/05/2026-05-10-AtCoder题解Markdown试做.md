@@ -373,3 +373,18 @@
     - `powershell -ExecutionPolicy Bypass -File D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1 -EditorialDir D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials`
   - 结果：
     - 成功重导 `ABC457` 的单题 PDF 与合并版 Markdown/PDF
+
+## 2026-05-10 补充更新：收紧 skill 文档表述范围
+
+- 用户追加要求：
+  - skill 相关文档不要再写绝对目录，统一改为相对路径
+  - 删除与题解制作无关的部分，例如委托模式
+  - 规范写成更通用的题解模式，而不是只适配 AtCoder
+- 本次调整：
+  - `atcoder-editorial-workflow` skill 目录内的文档已改为相对路径引用
+  - `references/题解撰写要求.md` 已去掉委托模式补充限制
+  - `references/题解撰写要求.md` 的标题与适用范围改成通用“题解”表述
+  - `references/代码规范.md` 中的“AtCoder 题解参考实现补充”改成更通用的“题解参考实现补充”
+- 验证：
+  - 扫描 skill 目录文档，未再发现绝对路径、`委托`、`worker`、`subagent` 相关表述
+  - 再次运行 `quick_validate.py`，结果仍为 `Skill is valid!`
