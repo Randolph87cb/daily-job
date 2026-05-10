@@ -1,11 +1,5 @@
 # ABC457 G - Catch All Apples 题解
 
-## 题目信息
-
-- 原题链接：[G - Catch All Apples](https://atcoder.jp/contests/abc457/tasks/abc457_g)
-- 题面对照：[../zh-CN/abc457_g.zh-CN.md](../zh-CN/abc457_g.zh-CN.md)
-- 分值：625
-
 ## 题意概括
 
 数轴上有 $N$ 个苹果，第 $i$ 个苹果会在时刻 $T_i$ 掉到坐标 $X_i$。
@@ -65,7 +59,14 @@
 2. 为了给后面的苹果留下尽量多的选择，应该把当前苹果接到“最后的 $v$ 最大但仍然不超过当前 $v$”的那个机器人后面。
 3. 如果所有机器人的最后 $v$ 都大于当前 $v$，说明当前苹果不能接到任何已有机器人后面，只能新开一个机器人。
 
-这就是经典的“最少非递减子序列覆盖”贪心。用 `multiset` 维护所有机器人的最后一个 $v$，每次二分找到最大的 `<= v` 即可。
+这就是经典的“最少非递减子序列覆盖”贪心。
+
+这里苹果本身可以先读进普通数组，再排序后依次处理；但机器人“当前最后一个 $v$”这批值会动态变化，并且需要反复完成下面两件事：
+
+- 找到最大的、满足 `<= 当前 v` 的末尾值；
+- 删掉这个旧末尾，再插入新的末尾值。
+
+如果只用普通数组保存这些末尾值，不管写成无序数组还是有序数组，都会在“查找前驱”或“删除插入并保持有序”上退化到 $O(N)$。由于 $N \leq 3 \times 10^5$，这里需要保留 `multiset`，用它在 $O(\log N)$ 内完成查找、删除和插入。
 
 ## 正确性说明
 
@@ -118,11 +119,24 @@
 
 其中排序需要 $O(N \log N)$，`multiset` 的每次插入、删除、查找都是 $O(\log N)$。
 
-## 参考实现（C++，遵守代码规范）
+## 参考实现
 
 ```cpp
 #include<bits/stdc++.h>
 using namespace std;
+
+const int MAXN = 300000 + 5;
+
+struct Apple{
+    int u, v;
+} apple[MAXN];
+
+bool cmp(Apple a, Apple b){
+    if(a.u != b.u){
+        return a.u < b.u;
+    }
+    return a.v < b.v;
+}
 
 int main(){
 
@@ -130,25 +144,23 @@ int main(){
     int n;
     cin >> n;
 
-    // apple[i] = {u_i, v_i}
-    vector<pair<int, int>> apple(n + 1);
+    // 读入每个苹果，并存下变换后的 u_i 和 v_i
     for(int i=1; i<=n; i++){
         int t, x;
         cin >> t >> x;
 
-        int u = t + x;
-        int v = t - x;
-        apple[i] = {u, v};
+        apple[i].u = t + x;
+        apple[i].v = t - x;
     }
 
     // 按 (u, v) 从小到大排序
-    sort(apple.begin() + 1, apple.end());
+    sort(apple + 1, apple + n + 1, cmp);
 
     // robot_last 中保存每个机器人当前最后一个 v
     multiset<int> robot_last;
 
     for(int i=1; i<=n; i++){
-        int v = apple[i].second;
+        int v = apple[i].v;
 
         // 找到最后一个 <= v 的机器人
         auto it = robot_last.upper_bound(v);

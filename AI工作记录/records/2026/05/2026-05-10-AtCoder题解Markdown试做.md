@@ -206,3 +206,170 @@
   - 原因不是脚本缺失，而是缺少认证前提：
     - 当前机器没有可复用的 AtCoder 登录 Cookie
     - 当前线程也没有提供可用于密码登录的 AtCoder 用户名/密码
+
+## 2026-05-10 补充更新：收紧数组写法规范并批量调整 ABC457 题解
+
+- 用户追加要求：
+  - 能用数组的地方尽量用数组
+  - 数组定义尽量放到 `main` 外
+  - 面向学生的题解代码里，尽量避免让人一眼就被 `vector` 绕住
+- 本次先更新的规范文件：
+  - `D:\workspace\daily-job\代码规范.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 本次固化的新约束包括：
+  - 普通静态范围问题优先使用普通数组，不默认上 `vector`
+  - 大数组、状态数组、辅助数组优先定义在 `main` 外
+  - 只有普通数组明显不合适时，才允许保留 `vector`、`set`、`map`、`unordered_map`
+  - 若保留容器，题解正文里必须解释“为什么这里不能直接改成普通数组”
+- 本次委托执行：
+  - `B / C` 由 worker 批量调整为全局数组写法
+  - `E / F` 由 worker 收口，其中：
+    - `E` 改成纯数组 + 排序分段二分，不再保留 `vector`、`map`
+    - `F` 改成纯数组 DP，不再保留 `vector`、`unordered_map`
+  - `G` 由 worker 收口：
+    - 苹果数据改成全局数组
+    - 保留 `multiset`，并在正文中说明保留原因
+  - `A` 由 worker 单独补齐，把局部数组移到 `main` 外
+- 本次最终涉及的题解文件：
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_d.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_e.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_f.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_g.editorial.md`
+- 本轮主线程复核结论：
+  - `A / B / C / D / F` 已符合“普通数组优先 + 数组尽量放主函数外”
+  - `E` 的参考实现已改成纯数组，正文只保留“这里不需要 `vector` / `map`”的说明
+  - `G` 只保留一个 `multiset`，并已说明原因：需要在 $O(\log N)$ 内维护前驱、删除旧末尾并插入新末尾
+- 验证：
+  - 扫描 `ABC457` 七篇题解，确认没有残留不加说明的 `vector` / `unordered_map`
+  - 从七篇 Markdown 中提取 `cpp` 代码块，逐篇运行 `g++ -std=c++17 -fsyntax-only`
+  - 结果：
+    - `abc457_a.editorial.md` 通过
+    - `abc457_b.editorial.md` 通过
+    - `abc457_c.editorial.md` 通过
+    - `abc457_d.editorial.md` 通过
+    - `abc457_e.editorial.md` 通过
+    - `abc457_f.editorial.md` 通过
+    - `abc457_g.editorial.md` 通过
+
+## 2026-05-10 补充更新：删除题目信息段并导出 ABC457 题解 PDF
+
+- 用户追加要求：
+  - `ABC457` 的题解里删除 `## 题目信息` 一栏
+  - 导出每题 PDF
+  - 额外生成一份合并版 Markdown 和合并版 PDF
+- 本次结构调整：
+  - `ABC457` 七篇题解统一删除了 `## 题目信息` 段及其下方条目
+  - 题解固定结构同步改成：
+    - 标题
+    - `## 题意概括`
+    - `## 解题思路`
+    - `## 正确性说明`
+    - `## 复杂度`
+    - `## 参考实现（C++，遵守代码规范）`
+- 本次更新的规则文档：
+  - `D:\workspace\daily-job\README.md`
+  - `D:\workspace\daily-job\AGENTS.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 本次修改的题解文件：
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_a.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_b.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_c.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_d.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_e.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_f.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_g.editorial.md`
+- 本次新增导出产物：
+  - 单题 PDF：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\A.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\B.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\C.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\D.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\E.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\F.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\G.pdf`
+  - 合并版：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457.editorials.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\ABC457-editorials.pdf`
+- 合并版处理方式：
+  - 在合并 Markdown 顶部添加 `# ABC457 题解合集`
+  - 各题之间插入 `<div style="page-break-after: always;"></div>`，方便 `md2pdf` 分页
+- 验证：
+  - 用 `Select-String '^## 题目信息$'` 检查七篇题解，结果为空
+  - 抽查七篇文件开头，均为标题后直接进入 `## 题意概括`
+  - 使用本机 `md2pdf` 成功导出 `A.pdf` 到 `G.pdf`
+  - 使用本机 `md2pdf` 成功导出合并版 `ABC457-editorials.pdf`
+  - 导出过程中产生的根目录 `.tmp\md2pdf` 缓存已清理
+
+## 2026-05-10 补充更新：将“参考实现”标题改短并重新导出
+
+- 用户追加要求：
+  - 把 `## 参考实现（C++，遵守代码规范）` 统一改成 `## 参考实现`
+  - 重新导出 Markdown / PDF 产物
+- 本次修改：
+  - 更新 `ABC457` 七篇单题题解中的该章节标题
+  - 更新 `D:\workspace\daily-job\atcoder-output\题解撰写要求.md` 中的固定结构说明
+  - 重新生成：
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457.editorials.md`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\A.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\B.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\C.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\D.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\E.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\F.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\G.pdf`
+    - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\ABC457-editorials.pdf`
+- 验证：
+  - 用 `Select-String '^## 参考实现$'` 检查七篇单题题解，均命中
+  - 检查合并版 `abc457.editorials.md`，七处对应章节标题也都已更新
+  - 使用本机 `md2pdf` 成功重新导出全部单题 PDF 与合并版 PDF
+
+## 2026-05-10 补充更新：总结题解流程并沉淀为项目内 skill
+
+- 用户要求：
+  - 总结刚刚形成的题解工作流
+  - 把流程变化同步回 `题解撰写要求.md` 与 `代码规范.md`
+  - 做成放在 `.codex` 里的项目内 skill
+  - 文档放在 skill 目录中
+- 本次新增 skill：
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\SKILL.md`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\workflow.md`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1`
+  - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\agents\openai.yaml`
+- 后续补充调整：
+  - 与该 skill 直接相关的规则文档已移动到：
+    - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\题解撰写要求.md`
+    - `D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\references\代码规范.md`
+- 本次同步更新的项目文档：
+  - `D:\workspace\daily-job\README.md`
+  - `D:\workspace\daily-job\AGENTS.md`
+  - `D:\workspace\daily-job\AI工作记录\skill-backlog.md`
+  - `D:\workspace\daily-job\代码规范.md`
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 这次固化下来的流程要点：
+  - 统一模板或风格变化时，先改规则文档，再批量改单题题解
+  - 单题题解改完后，再重生成：
+    - 单题 PDF
+    - 合并版 Markdown
+    - 合并版 PDF
+  - `## 题目信息` 已移除
+  - `## 参考实现` 保持简短标题
+  - 公式统一用 `$...$`
+  - 示例代码优先普通数组与全局数组；保留容器时要解释原因
+  - 导出时优先进入 `editorials/` 目录，用相对文件名调用 `md2pdf`
+- skill 中新增脚本用途：
+  - `export-editorials.ps1` 会自动识别 `*.editorial.md`
+  - 输出单题 PDF 为 `A.pdf`、`B.pdf` ...
+  - 输出合并版为 `<contest>.editorials.md` 与 `<CONTEST>-editorials.pdf`
+  - 导出完成后自动清理 `editorials/.tmp`
+- 验证：
+  - 运行：
+    - `python -X utf8 C:\Users\Administrator\.codex\skills\.system\skill-creator\scripts\quick_validate.py D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow`
+  - 结果：
+    - `Skill is valid!`
+  - 运行：
+    - `powershell -ExecutionPolicy Bypass -File D:\workspace\daily-job\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1 -EditorialDir D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials`
+  - 结果：
+    - 成功重导 `ABC457` 的单题 PDF 与合并版 Markdown/PDF

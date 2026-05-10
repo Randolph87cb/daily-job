@@ -1,11 +1,5 @@
 # ABC457 D - Raise Minimum 题解
 
-## 题目信息
-
-- 原题链接：[D - Raise Minimum](https://atcoder.jp/contests/abc457/tasks/abc457_d)
-- 题面对照：[../zh-CN/abc457_d.zh-CN.md](../zh-CN/abc457_d.zh-CN.md)
-- 分值：400
-
 ## 题意概括
 
 给定一个长度为 $N$ 的序列 $A$ 和整数 $K$。
@@ -93,7 +87,7 @@ $\left\lfloor \dfrac{X - A_i + i - 1}{i} \right\rfloor$
 - 时间复杂度：$O(N \log V)$，其中 $V$ 是答案的取值范围，这里二分的上界可以取到 $A_1 + K$
 - 空间复杂度：$O(N)$
 
-## 参考实现（C++，遵守代码规范）
+## 参考实现
 
 ```cpp
 #include<bits/stdc++.h>

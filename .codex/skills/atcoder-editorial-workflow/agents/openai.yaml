@@ -1,0 +1,4 @@
+interface:
+  display_name: "AtCoder题解工作流"
+  short_description: "批量维护 AtCoder 题解 Markdown、导出单题与合并版 PDF。"
+  default_prompt: "使用 $atcoder-editorial-workflow 处理当前比赛的题解：同步规则、批量修改 editorials，并重新导出 PDF。"
