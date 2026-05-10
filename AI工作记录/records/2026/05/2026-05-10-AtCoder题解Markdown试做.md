@@ -1,0 +1,38 @@
+# AtCoder 题解 Markdown 试做
+
+- 时间：2026-05-10
+- 目标：在现有 AtCoder 题面抓取、翻译和 PDF 流程之外，先做一篇 Markdown 题解样例，验证题解的目录落点和内容结构是否顺手。
+- 现有素材：
+  - `D:\workspace\daily-job\atcoder-output\abc456\zh-CN\abc456_a.zh-CN.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\zh-CN\abc457_a.zh-CN.md`
+- 关键决策：
+  - 这次不先改脚本，先用一篇手写题解验证版式。
+  - 试做题目选择 `ABC456 A - Dice`，因为它比单纯数组取值更适合展示“思路 + 正确性说明”。
+  - 题解产物先放在单场目录下的 `editorials/`，与 `en/`、`zh-CN/` 并列，避免先引入新的顶层目录。
+- 已完成修改：
+  - 新增题解样例：
+    - `D:\workspace\daily-job\atcoder-output\abc456\editorials\abc456_a.editorial.md`
+  - 更新目录说明：
+    - `D:\workspace\daily-job\README.md`
+    - `D:\workspace\daily-job\AGENTS.md`
+  - 更新 backlog：
+    - `D:\workspace\daily-job\AI工作记录\skill-backlog.md`
+- 题解结构试做结果：
+  - 当前样例包含：
+    - 题目信息
+    - 题意概括
+    - 解题思路
+    - 正确性说明
+    - 复杂度
+    - 参考实现
+  - 这版结构适合作为后续 AtCoder 题解的最小模板。
+- 验证：
+  - 确认新文件存在：
+    - `D:\workspace\daily-job\atcoder-output\abc456\editorials\abc456_a.editorial.md`
+  - 确认题面对照文件存在：
+    - `D:\workspace\daily-job\atcoder-output\abc456\zh-CN\abc456_a.zh-CN.md`
+  - 检查 `abc456_a.editorial.md` 内容，确认标题、分节、代码块和相对链接已写入。
+- 后续建议：
+  - 如果接下来继续做第二、第三篇题解，优先验证是否都适合沿用这套结构。
+  - 如果结构稳定，再考虑新增一个项目内 skill，把“读取题面 Markdown -> 生成题解草稿模板”的部分自动化。
+  - 题解正文里的“思路、证明、代码”仍应保留人工补写入口，不建议一开始就追求全自动。

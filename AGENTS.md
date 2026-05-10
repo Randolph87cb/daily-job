@@ -28,6 +28,9 @@
 │  └─ pipeline-output/
 ├─ atcoder-output/
 │  └─ <contest-id>/
+│     ├─ en/
+│     ├─ zh-CN/
+│     └─ editorials/
 ├─ 签到表/
 └─ 课时统计/
 ```

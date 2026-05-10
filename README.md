@@ -15,7 +15,7 @@
 │  ├─ records/YYYY/MM/*.md                     # 项目内 AI 工作摘要
 │  └─ skill-backlog.md                         # 可沉淀流程与 skill 候选
 ├─ atcoder-arc218/                             # AtCoder 脚本实验目录与参考文档
-├─ atcoder-output/                             # 比赛题面抓取、翻译与 PDF 输出
+├─ atcoder-output/                             # 比赛题面抓取、翻译、PDF 与题解输出
 ├─ 签到表/                                      # 月度签到表 Excel
 ├─ 课时统计/                                    # 课时统计表与历史月份数据
 ├─ AGENTS.md                                   # 项目协作规则
@@ -27,7 +27,7 @@
 - `.codex/skills/` 保存项目内使用的本地 skill，实现和项目流程一起维护。
 - `AI工作记录/` 保存当前项目的任务摘要、关键决策、验证结果和 skill 沉淀线索。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
-- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织。
+- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF 和 `editorials/` 题解 Markdown。
 - `签到表/` 与 `课时统计/` 保存实际业务 Excel 素材。
 
 ## 文档维护约定
