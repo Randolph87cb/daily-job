@@ -93,3 +93,56 @@
 - 当前约束：
   - 仍保持标准 Markdown 标题、列表、代码块结构
   - 但数学内容优先用 `$...$`，不再强行改成纯文本
+
+## 2026-05-10 补充更新：题解要求文档与委托模式补完 ABC457 D / E / F / G
+
+- 用户新要求：
+  - 先写一份“按照目前要求撰写题解”的说明文档。
+  - 开启委托模式，把 `ABC457` 剩余的 `D / E / F / G` 题解都按当前要求补齐。
+- 本次新增文档：
+  - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+- 该文档当前固化的要求包括：
+  - 文件落点与命名
+  - 固定章节结构
+  - 标准 Markdown 结构要求
+  - 数学表达统一使用 `$...$`
+  - `C++` 参考实现与 `代码规范.md` 对齐
+  - 提交前自查项
+- 本次委托执行：
+  - 已启用 subagent 并行处理 `D / E / F / G`
+  - `D` 与 `G` 的初稿由 worker 返回后纳入主线程复核
+  - `E` 的 worker 返回了可行思路与文件修改
+  - `F` 的 worker 未在要求时间内回报，主线程根据官方解法接管完成
+- 本次新增题解文件：
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_d.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_e.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_f.editorial.md`
+  - `D:\workspace\daily-job\atcoder-output\abc457-browser-pipeline\abc457\editorials\abc457_g.editorial.md`
+- 各题核心思路摘要：
+  - `D - Raise Minimum`：
+    - 二分答案 $X$
+    - 判定每个位置最少需要多少次操作使其达到 $X$
+    - 汇总最少需求次数并与 $K$ 比较
+  - `E - Crossing Table Cloth`：
+    - 按“是否存在恰好等于 $[S, T]$ 的布”分情况讨论
+    - 配合 `by_l`、`by_r`、区间计数和后缀最小右端做判定
+  - `F - Second Gap`：
+    - 从后往前做插入 DP
+    - 只记录当前后缀最大值位置
+    - 用公共乘法系数优化“整层统一乘常数”的转移
+  - `G - Catch All Apples`：
+    - 坐标变换为 $u = T + X$、$v = T - X$
+    - 排序后转成最少非递减子序列覆盖
+    - 用 `multiset` 贪心维护各机器人当前末尾
+- 额外参考来源：
+  - `E` 与 `F` 的主线程最终成稿参考了 AtCoder 官方解说页面思路：
+    - `https://atcoder.jp/contests/abc457/editorial/20075`
+    - `https://atcoder.jp/contests/abc457/editorial/20140`
+- 验证：
+  - 将 `D / E / F / G` 四篇题解中的 `cpp` 代码块提取到临时目录
+  - 使用 `g++ -std=c++17 -O2` 编译通过
+  - 运行样例检查，结果：
+    - `abc457_d.editorial.md` 样例 1 / 2 通过
+    - `abc457_e.editorial.md` 样例 1 通过
+    - `abc457_f.editorial.md` 样例 1 / 2 通过
+    - `abc457_g.editorial.md` 样例 1 / 2 通过
