@@ -146,3 +146,63 @@
     - `abc457_e.editorial.md` 样例 1 通过
     - `abc457_f.editorial.md` 样例 1 / 2 通过
     - `abc457_g.editorial.md` 样例 1 / 2 通过
+
+## 2026-05-10 补充更新：补充委托限制并接手 AtCoder 提交验证脚本收尾
+
+- 用户新增要求：
+  - 在题解要求中增加一条限制：
+    - 不允许出现“worker 没返回，主线程就直接接手同一实现任务”的情况
+  - 再补一个用于提交代码到 AtCoder 验证正确性的脚本
+  - 随后用户又明确允许主线程接手完成脚本编写
+- 已完成修改：
+  - 更新：
+    - `D:\workspace\daily-job\atcoder-output\题解撰写要求.md`
+  - 复核并确认现有提交验证脚本已在当前主分支：
+    - `D:\workspace\daily-job\atcoder-arc218\scripts\submit_atcoder_solution.py`
+  - 复核并确认 README 已包含提交验证脚本说明：
+    - `D:\workspace\daily-job\atcoder-arc218\README.md`
+- 新增的委托限制：
+  - 若某个实现任务已明确委托给 worker，则在该 worker 未返回最终结果前，主线程不能直接接手并覆盖同一实现
+  - 若长期未返回，应先催收口并记录阻塞点
+  - 只有在用户明确允许切换策略或明确要求主线程接手时，主线程才可以改为继续实现
+- 提交验证脚本当前支持：
+  - `--contest-id`
+  - `--task`
+  - `--source-file`
+  - `--language`
+    - 支持语言 id
+    - 支持完整名称
+    - 支持大小写不敏感子串匹配
+  - `--auth-mode auto|browser|password`
+  - `--browser-cookies`
+  - `--username`
+  - `--password`
+  - `--dry-run`
+  - `--print-languages`
+  - 真实提交后轮询直到终态，并输出：
+    - `submission_id`
+    - `verdict`
+    - `url`
+- 提交验证脚本的认证方式：
+  - 优先复用本机浏览器登录态 Cookie
+  - 支持显式用户名/密码登录作为备选
+- 本次主线程验证：
+  - 运行：
+    - `python -m py_compile D:\workspace\daily-job\atcoder-arc218\scripts\submit_atcoder_solution.py`
+  - 结果：
+    - 通过
+  - 运行：
+    - `python D:\workspace\daily-job\atcoder-arc218\scripts\submit_atcoder_solution.py --help`
+  - 结果：
+    - 参数说明正常输出
+  - 尝试检测当前机器的 AtCoder 浏览器 Cookie
+  - 结果：
+    - 当前机器没有可直接复用的 `atcoder.jp` 浏览器 Cookie
+  - 尝试访问提交流程页面
+  - 结果：
+    - 未登录状态会被重定向到 `https://atcoder.jp/login?...`
+- 当前仍未完成的闭环：
+  - 还没有在本次会话中做真实提交验证
+  - 原因不是脚本缺失，而是缺少认证前提：
+    - 当前机器没有可复用的 AtCoder 登录 Cookie
+    - 当前线程也没有提供可用于密码登录的 AtCoder 用户名/密码
