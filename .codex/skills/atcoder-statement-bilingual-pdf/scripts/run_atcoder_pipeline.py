@@ -108,6 +108,12 @@ def parse_args() -> argparse.Namespace:
         help="Session registry browser key. Default: chromium",
     )
     parser.add_argument(
+        "--session-mode",
+        default=fetch_atcoder_tasks.DEFAULT_SESSION_MODE,
+        choices=["storageState", "profile", "hybrid"],
+        help="Session registry mode. Default: hybrid",
+    )
+    parser.add_argument(
         "--login-check-selector",
         default="",
         help="Optional selector that proves the logged-in state. Default: empty",
@@ -170,6 +176,7 @@ def main() -> None:
             "[pipeline] session="
             f"{args.session_site}/{args.session_env}/{args.session_account}/{args.session_browser}"
         )
+        print(f"[pipeline] session_mode={args.session_mode}")
         if args.session_root is not None:
             print(f"[pipeline] session_root={args.session_root}")
         if args.login_check_selector:
@@ -188,6 +195,7 @@ def main() -> None:
         session_env=args.session_env,
         session_account=args.session_account,
         session_browser=args.session_browser,
+        session_mode=args.session_mode,
         login_check_selector=args.login_check_selector,
     )
     extracted_tasks = list(fetch_atcoder_tasks.extract_tasks(page_html, contest_id))
