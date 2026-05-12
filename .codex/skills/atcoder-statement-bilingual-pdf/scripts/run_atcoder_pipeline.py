@@ -105,13 +105,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--session-browser",
         default=fetch_atcoder_tasks.DEFAULT_SESSION_BROWSER,
-        help="Session registry browser key. Default: chromium",
+        help="Session registry browser key. Default: chrome",
     )
     parser.add_argument(
         "--session-mode",
         default=fetch_atcoder_tasks.DEFAULT_SESSION_MODE,
         choices=["storageState", "profile", "hybrid"],
-        help="Session registry mode. Default: hybrid",
+        help="Session registry mode. Default: profile",
     )
     parser.add_argument(
         "--login-check-selector",

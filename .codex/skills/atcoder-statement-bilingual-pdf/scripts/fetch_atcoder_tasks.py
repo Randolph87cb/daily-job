@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 import requests
 from lxml import html
+from playwright.sync_api import sync_playwright
 
 try:
     import browser_cookie3
@@ -26,14 +27,20 @@ BROWSER_COOKIE_ORDER = ["chrome", "edge", "brave", "chromium", "firefox", "opera
 DEFAULT_SESSION_SITE = "atcoder"
 DEFAULT_SESSION_ENV = "prod"
 DEFAULT_SESSION_ACCOUNT = "default"
-DEFAULT_SESSION_BROWSER = "chromium"
-DEFAULT_SESSION_MODE = "hybrid"
+DEFAULT_SESSION_BROWSER = "chrome"
+DEFAULT_SESSION_MODE = "profile"
 DEFAULT_LOGIN_PATTERNS = [
     r"登录",
     r"注册",
     r"\blogin\b",
     r"sign\s*in",
     r"sign\s*up",
+]
+CLOUDFLARE_TEXT_PATTERNS = [
+    "verify you are human",
+    "checking your browser",
+    "just a moment",
+    "cloudflare",
 ]
 
 
@@ -90,13 +97,13 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--session-browser",
         default=DEFAULT_SESSION_BROWSER,
-        help="Session registry browser key. Default: chromium",
+        help="Session registry browser key. Default: chrome",
     )
     parser.add_argument(
         "--session-mode",
         default=DEFAULT_SESSION_MODE,
         choices=["storageState", "profile", "hybrid"],
-        help="Session registry mode. Default: hybrid",
+        help="Session registry mode. Default: profile",
     )
     parser.add_argument(
         "--login-check-selector",
@@ -389,6 +396,7 @@ def refresh_browser_session_login(
     session_browser: str,
     session_mode: str,
     login_check_selector: str,
+    manual_open: bool,
 ) -> dict[str, object]:
     script_path = session_manager_script("refresh_login.ps1")
     arguments = [
@@ -399,13 +407,8 @@ def refresh_browser_session_login(
             session_account=session_account,
             session_browser=session_browser,
         ),
-        *session_mode_path_arguments(
-            session_mode,
-            session_site=session_site,
-            session_env=session_env,
-            session_account=session_account,
-            session_browser=session_browser,
-        ),
+        "-Mode",
+        session_mode,
         "-BaseUrl",
         contest_base_url(contest),
         "-CheckUrl",
@@ -413,6 +416,8 @@ def refresh_browser_session_login(
         "-Url",
         contest_base_url(contest),
     ]
+    if manual_open:
+        arguments.append("-ManualOpen")
     if login_check_selector.strip():
         arguments.extend(["-CheckSelector", login_check_selector.strip()])
     return run_powershell_json(script_path, arguments)
@@ -429,6 +434,15 @@ def normalize_browser_name(name: str) -> str:
     return value
 
 
+def playwright_channel_name(name: str) -> str | None:
+    value = (name or DEFAULT_SESSION_BROWSER).strip().lower()
+    if value == "chrome":
+        return "chrome"
+    if value in {"edge", "msedge"}:
+        return "msedge"
+    return None
+
+
 def is_login_url(url: str) -> bool:
     return urlparse(url).path.rstrip("/") == "/login"
 
@@ -443,27 +457,38 @@ def state_file_cookies(state_path: Path) -> list[dict[str, object]]:
     return [cookie for cookie in cookies if isinstance(cookie, dict)]
 
 
-def apply_storage_state_cookies(
-    request_session: requests.Session,
-    state_path: Path,
-) -> None:
-    for cookie in state_file_cookies(state_path):
-        name = str(cookie.get("name") or "")
-        value = str(cookie.get("value") or "")
-        if not name:
-            continue
-        domain = str(cookie.get("domain") or "atcoder.jp")
-        path = str(cookie.get("path") or "/")
-        secure = bool(cookie.get("secure", False))
-        expires = cookie.get("expires")
-        request_session.cookies.set(
-            name,
-            value,
-            domain=domain,
-            path=path,
-            secure=secure,
-            expires=expires if isinstance(expires, (int, float)) else None,
-        )
+def directory_has_entries(path: Path | None) -> bool:
+    if path is None or not path.exists() or not path.is_dir():
+        return False
+    return any(path.iterdir())
+
+
+def session_artifact_ready(session_metadata: dict[str, object]) -> bool:
+    mode = str(session_metadata.get("mode") or DEFAULT_SESSION_MODE)
+    state_path_raw = session_metadata.get("statePath")
+    profile_path_raw = session_metadata.get("profilePath")
+    state_exists = bool(state_path_raw) and Path(str(state_path_raw)).is_file()
+    profile_ready = bool(profile_path_raw) and directory_has_entries(Path(str(profile_path_raw)))
+    if mode == "storageState":
+        return state_exists
+    if mode in {"profile", "hybrid"}:
+        return profile_ready or state_exists
+    return state_exists or profile_ready
+
+
+def should_use_manual_login(session_browser: str, session_mode: str) -> bool:
+    normalized_browser = (session_browser or "").strip().lower()
+    return session_mode in {"profile", "hybrid"} and normalized_browser in {
+        "chrome",
+        "chrome-beta",
+        "chrome-dev",
+        "chrome-canary",
+        "edge",
+        "msedge",
+        "msedge-beta",
+        "msedge-dev",
+        "msedge-canary",
+    }
 
 
 def html_requires_login(
@@ -475,6 +500,13 @@ def html_requires_login(
         return True, "redirected_to_login"
 
     root = html.fromstring(page_html)
+    text_sample = normalize_text(" ".join(root.xpath("//body//text()"))).lower()
+    if "cdn-cgi/challenge-platform" in final_url.lower():
+        return True, "cloudflare_challenge_url"
+    for pattern in CLOUDFLARE_TEXT_PATTERNS:
+        if pattern in text_sample:
+            return True, f"cloudflare_challenge:{pattern}"
+
     if check_selector.strip():
         try:
             if root.cssselect(check_selector.strip()):
@@ -499,27 +531,46 @@ def fetch_html_via_storage_state(
     check_selector: str,
 ) -> tuple[str, bool, str]:
     state_path = Path(str(session_metadata["statePath"]))
-    goto_url = str(session_metadata.get("checkUrl") or tasks_print_url(contest))
-    request_session = requests.Session()
-    apply_storage_state_cookies(request_session, state_path)
-    response = request_session.get(
-        goto_url,
-        timeout=timeout,
-        headers={
-            "User-Agent": "Mozilla/5.0 (compatible; AtCoderStatementFetcher/1.0)",
-            "Referer": contest_base_url(contest),
-        },
-        allow_redirects=True,
-    )
-    response.raise_for_status()
-    requires_login, reason = html_requires_login(
-        response.text,
-        response.url,
-        check_selector,
-    )
-    if requires_login:
-        return "", False, reason
-    return response.text, True, reason
+    profile_path_raw = session_metadata.get("profilePath")
+    profile_path = Path(str(profile_path_raw)) if profile_path_raw else None
+    goto_url = tasks_print_url(contest)
+    browser_name = str(session_metadata.get("browser") or DEFAULT_SESSION_BROWSER)
+    playwright_browser = normalize_browser_name(browser_name)
+    channel_name = playwright_channel_name(browser_name)
+    timeout_ms = timeout * 1000
+
+    with sync_playwright() as playwright:
+        browser_launcher = getattr(playwright, playwright_browser)
+        if profile_path is not None and profile_path.exists():
+            context = browser_launcher.launch_persistent_context(
+                user_data_dir=str(profile_path),
+                channel=channel_name,
+                headless=False,
+            )
+        else:
+            launch_kwargs: dict[str, object] = {"headless": True}
+            if channel_name:
+                launch_kwargs["channel"] = channel_name
+            browser = browser_launcher.launch(**launch_kwargs)
+            context_kwargs: dict[str, object] = {}
+            if state_path.is_file():
+                context_kwargs["storage_state"] = str(state_path)
+            context = browser.new_context(**context_kwargs)
+
+        try:
+            page = context.new_page()
+            response = page.goto(goto_url, wait_until="domcontentloaded", timeout=timeout_ms)
+            page.wait_for_load_state("networkidle", timeout=timeout_ms)
+            final_url = page.url
+            content = page.content()
+            if response is not None and response.status >= 400:
+                raise RuntimeError(f"Failed to fetch {goto_url}: HTTP {response.status}")
+            requires_login, reason = html_requires_login(content, final_url, check_selector)
+            if requires_login:
+                return "", False, reason
+            return content, True, reason
+        finally:
+            context.close()
 
 
 def fetch_html(
@@ -547,10 +598,9 @@ def fetch_html(
             session_mode=session_mode,
             login_check_selector=login_check_selector,
         )
-        state_path = Path(str(session_metadata["statePath"]))
-        if not state_path.is_file():
+        if not session_artifact_ready(session_metadata):
             print(
-                "[fetch] AtCoder session state file is missing; opening browser for manual login.",
+                "[fetch] AtCoder session artifact is missing; opening browser for manual login.",
                 file=sys.stderr,
             )
             refresh_browser_session_login(
@@ -562,6 +612,7 @@ def fetch_html(
                 session_browser=session_browser,
                 session_mode=session_mode,
                 login_check_selector=login_check_selector,
+                manual_open=should_use_manual_login(session_browser, session_mode),
             )
             session_metadata = upsert_browser_session(
                 contest,
@@ -593,6 +644,7 @@ def fetch_html(
                 session_browser=session_browser,
                 session_mode=session_mode,
                 login_check_selector=login_check_selector,
+                manual_open=should_use_manual_login(session_browser, session_mode),
             )
             session_metadata = upsert_browser_session(
                 contest,
