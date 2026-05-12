@@ -71,9 +71,46 @@ def parse_args() -> argparse.Namespace:
         help="HTTP timeout for fetching statements. Default: 30",
     )
     parser.add_argument(
+        "--auth-mode",
+        default="session",
+        choices=["session", "browser-cookies"],
+        help="Authentication mode. Default: session",
+    )
+    parser.add_argument(
         "--browser-cookies",
         default="auto",
-        help="Load cookies directly from a local browser profile. Default: auto. Supported: auto, chrome, edge, brave, chromium, firefox, opera, vivaldi.",
+        help="Load cookies directly from a local browser profile when --auth-mode=browser-cookies. Default: auto. Supported: auto, chrome, edge, brave, chromium, firefox, opera, vivaldi.",
+    )
+    parser.add_argument(
+        "--session-root",
+        type=Path,
+        default=None,
+        help="Override the browser-session-manager store root. Default: %%LOCALAPPDATA%%\\Codex\\browser-sessions",
+    )
+    parser.add_argument(
+        "--session-site",
+        default=fetch_atcoder_tasks.DEFAULT_SESSION_SITE,
+        help="Session registry site key. Default: atcoder",
+    )
+    parser.add_argument(
+        "--session-env",
+        default=fetch_atcoder_tasks.DEFAULT_SESSION_ENV,
+        help="Session registry env key. Default: prod",
+    )
+    parser.add_argument(
+        "--session-account",
+        default=fetch_atcoder_tasks.DEFAULT_SESSION_ACCOUNT,
+        help="Session registry account key. Default: default",
+    )
+    parser.add_argument(
+        "--session-browser",
+        default=fetch_atcoder_tasks.DEFAULT_SESSION_BROWSER,
+        help="Session registry browser key. Default: chromium",
+    )
+    parser.add_argument(
+        "--login-check-selector",
+        default="",
+        help="Optional selector that proves the logged-in state. Default: empty",
     )
     parser.add_argument(
         "--output-format",
@@ -127,13 +164,31 @@ def main() -> None:
         print(f"[pipeline] api_mode={api_mode}")
         print(f"[pipeline] base_url={base_url}")
         print(f"[pipeline] model={args.model}")
-    print(f"[pipeline] browser_cookies={args.browser_cookies}")
+    print(f"[pipeline] auth_mode={args.auth_mode}")
+    if args.auth_mode == "session":
+        print(
+            "[pipeline] session="
+            f"{args.session_site}/{args.session_env}/{args.session_account}/{args.session_browser}"
+        )
+        if args.session_root is not None:
+            print(f"[pipeline] session_root={args.session_root}")
+        if args.login_check_selector:
+            print(f"[pipeline] login_check_selector={args.login_check_selector}")
+    else:
+        print(f"[pipeline] browser_cookies={args.browser_cookies}")
 
     print("[pipeline] fetching english statements")
     page_html = fetch_atcoder_tasks.fetch_html(
         contest_id,
         args.timeout,
+        auth_mode=args.auth_mode,
         browser_cookies=args.browser_cookies,
+        session_root=args.session_root,
+        session_site=args.session_site,
+        session_env=args.session_env,
+        session_account=args.session_account,
+        session_browser=args.session_browser,
+        login_check_selector=args.login_check_selector,
     )
     extracted_tasks = list(fetch_atcoder_tasks.extract_tasks(page_html, contest_id))
     for index, (slug, markdown) in enumerate(extracted_tasks, start=1):
