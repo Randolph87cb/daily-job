@@ -530,6 +530,22 @@ def build_bilingual_markdown_with_glossary(
 ) -> str:
     source_blocks = split_markdown_content_blocks(source_text)
     translated_blocks = split_markdown_content_blocks(translated_text)
+    return build_bilingual_markdown_from_blocks(
+        source_blocks,
+        translated_blocks,
+        source_text,
+        translated_text,
+        glossary,
+    )
+
+
+def build_bilingual_markdown_from_blocks(
+    source_blocks: list[str],
+    translated_blocks: list[str],
+    source_text: str,
+    translated_text: str,
+    glossary: Glossary,
+) -> str:
 
     if len(source_blocks) != len(translated_blocks):
         return fallback_bilingual_markdown(source_text, translated_text)
@@ -655,6 +671,8 @@ class OpenAITranslator:
             "Translate only the content between each pair of markers.\n"
             "Keep Markdown structure inside each block.\n"
             "Keep placeholder tokens, formulas, URLs, and inline code unchanged.\n"
+            "If your endpoint enforces JSON output, return only JSON in the form "
+            '{"blocks":[{"id":1,"content":"..."}]}.\n'
             f"{block_payload}"
         )
 
@@ -764,14 +782,16 @@ class OpenAITranslator:
         return (
             "You translate competitive programming statements into Simplified Chinese.\n"
             "Rules:\n"
-            "1. You will receive JSON with multiple Markdown blocks.\n"
-            "2. Return valid JSON only.\n"
-            "3. Preserve one output block for each input block, with the same id.\n"
-            "4. Preserve Markdown structure inside each block.\n"
-            "5. Keep formulas, variable names, sample input/output, URLs, and placeholder tokens unchanged.\n"
-            "6. Use natural Chinese algorithm-problem phrasing, not word-for-word translation.\n"
-            "7. Do not add explanations, hints, or solution ideas.\n"
-            "8. Prefer the following terminology when applicable:\n"
+            "1. You will receive multiple Markdown blocks wrapped in explicit block markers.\n"
+            "2. Preserve one output block for each input block, with the same id.\n"
+            "3. Preserve Markdown structure inside each block.\n"
+            "4. Keep formulas, variable names, sample input/output, URLs, and placeholder tokens unchanged.\n"
+            "5. Use natural Chinese algorithm-problem phrasing, not word-for-word translation.\n"
+            "6. Do not add explanations, hints, or solution ideas.\n"
+            "7. Return only the translated blocks using the same block markers.\n"
+            "8. If your serving layer requires JSON output, return only:\n"
+            '{"blocks":[{"id":1,"content":"..."}]}\n'
+            "9. Prefer the following terminology when applicable:\n"
             f"{joined_glossary}"
         )
 
@@ -840,8 +860,49 @@ class OpenAITranslator:
         translated: list[str] = []
         for block_id in range(1, expected_count + 1):
             if block_id not in translated_by_id:
+                return OpenAITranslator._extract_translated_blocks_json(text, expected_count)
+            translated.append(translated_by_id[block_id])
+
+        return translated
+
+    @staticmethod
+    def _extract_translated_blocks_json(text: str, expected_count: int) -> list[str]:
+        candidate = text.strip()
+        fence_match = re.fullmatch(r"```(?:json)?\s*([\s\S]*?)\s*```", candidate, flags=re.IGNORECASE)
+        if fence_match:
+            candidate = fence_match.group(1).strip()
+
+        try:
+            payload = json.loads(candidate)
+        except json.JSONDecodeError as exc:
+            raise TranslationError(
+                "OpenAI provider tagged response is missing block markers and JSON fallback parsing failed. "
+                f"Raw output: {text}"
+            ) from exc
+
+        blocks = payload.get("blocks")
+        if not isinstance(blocks, list):
+            raise TranslationError(
+                f"OpenAI provider JSON fallback is missing a blocks array. Raw output: {text}"
+            )
+
+        translated_by_id: dict[int, str] = {}
+        for item in blocks:
+            if not isinstance(item, dict):
+                continue
+            block_id = item.get("id")
+            content = item.get("content")
+            if isinstance(block_id, str) and block_id.isdigit():
+                block_id = int(block_id)
+            if not isinstance(block_id, int) or not isinstance(content, str):
+                continue
+            translated_by_id[block_id] = content.strip()
+
+        translated: list[str] = []
+        for block_id in range(1, expected_count + 1):
+            if block_id not in translated_by_id:
                 raise TranslationError(
-                    f"OpenAI provider tagged response is missing block id {block_id}. Raw output: {text}"
+                    f"OpenAI provider JSON fallback is missing block id {block_id}. Raw output: {text}"
                 )
             translated.append(translated_by_id[block_id])
 
@@ -868,7 +929,7 @@ def create_translator(args: argparse.Namespace, glossary: Glossary) -> Translato
     )
 
 
-def translate_markdown(text: str, translator: Translator) -> str:
+def translate_markdown_blocks(text: str, translator: Translator) -> list[str]:
     if isinstance(translator, OpenAITranslator):
         source_blocks = split_markdown_content_blocks(text)
         translated_blocks: list[str] = [""] * len(source_blocks)
@@ -890,10 +951,7 @@ def translate_markdown(text: str, translator: Translator) -> str:
             for index, translated_block in zip(model_indices, model_translations, strict=True):
                 translated_blocks[index] = translated_block
 
-        translated = "\n\n".join(block.strip() for block in translated_blocks if block.strip())
-        if not translated.endswith("\n"):
-            translated += "\n"
-        return translated
+        return translated_blocks
 
     masked_text, fence_tokens = protect_pattern(text, CODE_FENCE_PATTERN, "FENCE")
     parts = split_preserving_separators(masked_text)
@@ -912,6 +970,12 @@ def translate_markdown(text: str, translator: Translator) -> str:
     translated = restore_tokens(translated, fence_tokens)
     translated = unwrap_fenced_math_blocks(translated)
     translated = unwrap_inline_math_code_spans(translated)
+    return split_markdown_content_blocks(translated)
+
+
+def translate_markdown(text: str, translator: Translator) -> str:
+    translated_blocks = translate_markdown_blocks(text, translator)
+    translated = "\n\n".join(block.strip() for block in translated_blocks if block.strip())
     if not translated.endswith("\n"):
         translated += "\n"
     return translated
@@ -1029,10 +1093,19 @@ def main() -> None:
 
         print(f"[translate] [{index}/{total}] translating {source_path.name}")
         source_text = source_path.read_text(encoding="utf-8")
-        translated_text = translate_markdown(source_text, translator)
+        translated_blocks = translate_markdown_blocks(source_text, translator)
+        translated_text = "\n\n".join(block.strip() for block in translated_blocks if block.strip())
+        if not translated_text.endswith("\n"):
+            translated_text += "\n"
         final_text = translated_text
         if args.output_format == "bilingual":
-            final_text = build_bilingual_markdown_with_glossary(source_text, translated_text, glossary)
+            final_text = build_bilingual_markdown_from_blocks(
+                split_markdown_content_blocks(source_text),
+                translated_blocks,
+                source_text,
+                translated_text,
+                glossary,
+            )
         output_path.write_text(final_text, encoding="utf-8")
         print(f"[translate] [{index}/{total}] wrote {output_path}")
         output_paths.append(output_path)

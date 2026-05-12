@@ -280,6 +280,10 @@ def contest_base_url(contest: str) -> str:
     return f"{ATCODER_BASE}/contests/{contest}"
 
 
+def tasks_list_url(contest: str) -> str:
+    return f"{ATCODER_BASE}/contests/{contest}/tasks?lang=en"
+
+
 def safe_session_component(text: str) -> str:
     safe = (text or "default").strip().lower()
     safe = re.sub(r'[\\/:*?"<>|]', "-", safe)
@@ -320,9 +324,9 @@ def session_mode_path_arguments(
         session_account,
         session_browser,
     )
-    arguments = ["-Mode", session_mode, "-StatePath", f"{safe_stem}.json"]
+    arguments = ["-Mode", session_mode, "-StatePath", f"states/{safe_stem}.json"]
     if session_mode in {"profile", "hybrid"}:
-        arguments.extend(["-ProfilePath", safe_stem])
+        arguments.extend(["-ProfilePath", f"profiles/{safe_stem}"])
     return arguments
 
 
@@ -396,7 +400,6 @@ def refresh_browser_session_login(
     session_browser: str,
     session_mode: str,
     login_check_selector: str,
-    manual_open: bool,
 ) -> dict[str, object]:
     script_path = session_manager_script("refresh_login.ps1")
     arguments = [
@@ -416,8 +419,6 @@ def refresh_browser_session_login(
         "-Url",
         contest_base_url(contest),
     ]
-    if manual_open:
-        arguments.append("-ManualOpen")
     if login_check_selector.strip():
         arguments.extend(["-CheckSelector", login_check_selector.strip()])
     return run_powershell_json(script_path, arguments)
@@ -476,20 +477,64 @@ def session_artifact_ready(session_metadata: dict[str, object]) -> bool:
     return state_exists or profile_ready
 
 
-def should_use_manual_login(session_browser: str, session_mode: str) -> bool:
-    normalized_browser = (session_browser or "").strip().lower()
-    return session_mode in {"profile", "hybrid"} and normalized_browser in {
-        "chrome",
-        "chrome-beta",
-        "chrome-dev",
-        "chrome-canary",
-        "edge",
-        "msedge",
-        "msedge-beta",
-        "msedge-dev",
-        "msedge-canary",
-    }
+def state_file_ready(session_metadata: dict[str, object]) -> bool:
+    state_path_raw = session_metadata.get("statePath")
+    return bool(state_path_raw) and Path(str(state_path_raw)).is_file()
 
+
+def profile_cookie_sources(profile_path: Path) -> tuple[Path, Path] | None:
+    candidates = [
+        (
+            profile_path / "Default" / "Network" / "Cookies",
+            profile_path / "Local State",
+        ),
+        (
+            profile_path / "Network" / "Cookies",
+            profile_path / "Local State",
+        ),
+    ]
+    for cookie_file, key_file in candidates:
+        if cookie_file.is_file() and key_file.is_file():
+            return cookie_file, key_file
+    return None
+
+
+def load_profile_cookie_jar(
+    browser_name: str,
+    profile_path: Path,
+    domain_name: str = "atcoder.jp",
+):
+    sources = profile_cookie_sources(profile_path)
+    if sources is None:
+        raise RuntimeError(f"Could not find cookie database in profile: {profile_path}")
+    cookie_file, key_file = sources
+    normalized = (browser_name or DEFAULT_SESSION_BROWSER).strip().lower()
+    if normalized.startswith("chrome"):
+        loader = browser_cookie3.chrome
+    elif normalized in {"edge", "msedge"} or normalized.startswith("msedge"):
+        loader = browser_cookie3.edge
+    else:
+        raise RuntimeError(f"Unsupported browser for profile cookie loading: {browser_name}")
+    return loader(cookie_file=str(cookie_file), key_file=str(key_file), domain_name=domain_name)
+
+
+def storage_state_from_cookie_jar(cookie_jar) -> dict[str, object]:
+    cookies: list[dict[str, object]] = []
+    for cookie in cookie_jar:
+        item: dict[str, object] = {
+            "name": cookie.name,
+            "value": cookie.value,
+            "domain": cookie.domain,
+            "path": cookie.path or "/",
+            "expires": float(cookie.expires) if cookie.expires else -1,
+            "httpOnly": bool(getattr(cookie, "_rest", {}).get("HttpOnly")),
+            "secure": bool(cookie.secure),
+        }
+        same_site = getattr(cookie, "_rest", {}).get("SameSite")
+        if same_site in {"Lax", "None", "Strict"}:
+            item["sameSite"] = same_site
+        cookies.append(item)
+    return {"cookies": cookies, "origins": []}
 
 def html_requires_login(
     page_html: str,
@@ -538,28 +583,35 @@ def fetch_html_via_storage_state(
     playwright_browser = normalize_browser_name(browser_name)
     channel_name = playwright_channel_name(browser_name)
     timeout_ms = timeout * 1000
+    launch_kwargs: dict[str, object] = {"headless": False}
+    if channel_name:
+        launch_kwargs["channel"] = channel_name
 
     with sync_playwright() as playwright:
         browser_launcher = getattr(playwright, playwright_browser)
-        if profile_path is not None and profile_path.exists():
-            context = browser_launcher.launch_persistent_context(
-                user_data_dir=str(profile_path),
-                channel=channel_name,
-                headless=False,
-            )
+        if state_path.is_file():
+            browser = browser_launcher.launch(**launch_kwargs)
+            context = browser.new_context(storage_state=str(state_path))
+        elif profile_path is not None and profile_path.exists() and browser_cookie3 is not None:
+            browser = browser_launcher.launch(**launch_kwargs)
+            cookie_jar = load_profile_cookie_jar(browser_name, profile_path)
+            context = browser.new_context(storage_state=storage_state_from_cookie_jar(cookie_jar))
         else:
-            launch_kwargs: dict[str, object] = {"headless": True}
-            if channel_name:
-                launch_kwargs["channel"] = channel_name
             browser = browser_launcher.launch(**launch_kwargs)
             context_kwargs: dict[str, object] = {}
-            if state_path.is_file():
-                context_kwargs["storage_state"] = str(state_path)
             context = browser.new_context(**context_kwargs)
 
         try:
             page = context.new_page()
-            response = page.goto(goto_url, wait_until="domcontentloaded", timeout=timeout_ms)
+            warmup_urls = [
+                contest_base_url(contest),
+                tasks_list_url(contest),
+                goto_url,
+            ]
+            response = None
+            for current_url in warmup_urls:
+                response = page.goto(current_url, wait_until="domcontentloaded", timeout=timeout_ms)
+                page.wait_for_load_state("networkidle", timeout=timeout_ms)
             page.wait_for_load_state("networkidle", timeout=timeout_ms)
             final_url = page.url
             content = page.content()
@@ -612,7 +664,6 @@ def fetch_html(
                 session_browser=session_browser,
                 session_mode=session_mode,
                 login_check_selector=login_check_selector,
-                manual_open=should_use_manual_login(session_browser, session_mode),
             )
             session_metadata = upsert_browser_session(
                 contest,
@@ -644,7 +695,6 @@ def fetch_html(
                 session_browser=session_browser,
                 session_mode=session_mode,
                 login_check_selector=login_check_selector,
-                manual_open=should_use_manual_login(session_browser, session_mode),
             )
             session_metadata = upsert_browser_session(
                 contest,
@@ -697,6 +747,8 @@ def html_fragment_to_markdown(fragment_html: str) -> str:
         ["node", str(TURNDOWN_SCRIPT)],
         input=payload,
         text=True,
+        encoding="utf-8",
+        errors="replace",
         capture_output=True,
         check=True,
         cwd=SCRIPT_DIR.parent,

@@ -235,10 +235,16 @@ def main() -> None:
 
         print(f"[pipeline] [translate {index}/{total}] translating {source_path.name}")
         source_text = source_path.read_text(encoding="utf-8")
-        translated_text = translate_markdown.translate_markdown(source_text, translator)
+        source_blocks = translate_markdown.split_markdown_content_blocks(source_text)
+        translated_blocks = translate_markdown.translate_markdown_blocks(source_text, translator)
+        translated_text = "\n\n".join(block.strip() for block in translated_blocks if block.strip())
+        if not translated_text.endswith("\n"):
+            translated_text += "\n"
         final_text = translated_text
         if args.output_format == "bilingual":
-            final_text = translate_markdown.build_bilingual_markdown_with_glossary(
+            final_text = translate_markdown.build_bilingual_markdown_from_blocks(
+                source_blocks,
+                translated_blocks,
                 source_text,
                 translated_text,
                 glossary,
