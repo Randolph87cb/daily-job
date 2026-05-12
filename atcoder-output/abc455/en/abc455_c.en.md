@@ -2,20 +2,20 @@
 
 Source: https://atcoder.jp/contests/abc455/tasks/abc455_c?lang=en
 
-Score : $300300300$ points
+Score : $300$ points
 
 ### Problem Statement
 
-You are given an integer sequence $A=(A1,A2,…,AN)A = (A_1, A_2, \ldots, A_N)A=(A1​,A2​,…,AN​)$.
+You are given an integer sequence $A = (A_1, A_2, \ldots, A_N)$.
 
-Find the minimum possible sum of all elements of $AAA$ after performing the following operation exactly $KKK$ times.
+Find the minimum possible sum of all elements of $A$ after performing the following operation exactly $K$ times.
 
--   Choose an integer $xxx$. For each $iii$ such that $Ai=xA_i = xAi​=x$, replace the value of $AiA_iAi​$ with $000$.
+-   Choose an integer $x$. For each $i$ such that $A_i = x$, replace the value of $A_i$ with $0$.
 
 ### Constraints
 
--   $1≤K≤N≤3×1051 \leq K \leq N \leq 3 \times 10^51≤K≤N≤3×105$
--   $1≤Ai≤1091 \leq A_i \leq 10^91≤Ai​≤109$
+-   $1 \leq K \leq N \leq 3 \times 10^5$
+-   $1 \leq A_i \leq 10^9$
 -   All input values are integers.
 
 ### Input
@@ -23,8 +23,8 @@ Find the minimum possible sum of all elements of $AAA$ after performing the foll
 The input is given from Standard Input in the following format:
 
 ```text
-$NNN$ $KKK$
-$A1A_1A1​$ $A2A_2A2​$ $…\ldots…$ $ANA_NAN​$
+$N$ $K$
+$A_1$ $A_2$ $\ldots$ $A_N$
 ```
 
 ### Output
@@ -44,13 +44,13 @@ Output the answer.
 6
 ```
 
-Initially, $A=(7,2,7,2,2,9)A = (7, 2, 7, 2, 2, 9)A=(7,2,7,2,2,9)$.
+Initially, $A = (7, 2, 7, 2, 2, 9)$.
 
-Performing the operation with $x=9x = 9x=9$ gives $A=(7,2,7,2,2,0)A = (7, 2, 7, 2, 2, 0)A=(7,2,7,2,2,0)$.
+Performing the operation with $x = 9$ gives $A = (7, 2, 7, 2, 2, 0)$.
 
-Next, performing the operation with $x=7x = 7x=7$ gives $A=(0,2,0,2,2,0)A = (0, 2, 0, 2, 2, 0)A=(0,2,0,2,2,0)$.
+Next, performing the operation with $x = 7$ gives $A = (0, 2, 0, 2, 2, 0)$.
 
-At this point, the sum of all elements of $AAA$ is $0+2+0+2+2+0=60 + 2 + 0 + 2 + 2 + 0 = 60+2+0+2+2+0=6$.
+At this point, the sum of all elements of $A$ is $0 + 2 + 0 + 2 + 2 + 0 = 6$.
 
 ### Sample Input 2
 

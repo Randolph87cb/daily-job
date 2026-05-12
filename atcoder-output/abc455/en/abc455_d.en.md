@@ -2,26 +2,26 @@
 
 Source: https://atcoder.jp/contests/abc455/tasks/abc455_d?lang=en
 
-Score : $400400400$ points
+Score : $400$ points
 
 ### Problem Statement
 
-There are $NNN$ cards and $NNN$ piles of cards.
+There are $N$ cards and $N$ piles of cards.
 
-The cards and the piles are numbered $1,2,…,N1, 2, \ldots, N1,2,…,N$. Initially, pile $iii$ contains only card $iii$.
+The cards and the piles are numbered $1, 2, \ldots, N$. Initially, pile $i$ contains only card $i$.
 
-Perform the following operation for each $i=1,2,…,Qi = 1, 2, \ldots, Qi=1,2,…,Q$ in order:
+Perform the following operation for each $i = 1, 2, \ldots, Q$ in order:
 
--   Move card $CiC_iCi​$ and all cards stacked on top of card $CiC_iCi​$, preserving their order, on top of card $PiP_iPi​$. It is guaranteed that immediately before performing the operation, cards $CiC_iCi​$ and $PiP_iPi​$ are in different piles, and card $PiP_iPi​$ is on top of some pile.
+-   Move card $C_i$ and all cards stacked on top of card $C_i$, preserving their order, on top of card $P_i$. It is guaranteed that immediately before performing the operation, cards $C_i$ and $P_i$ are in different piles, and card $P_i$ is on top of some pile.
 
 Find the number of cards in each pile after all operations are completed.
 
 ### Constraints
 
--   $1≤N,Q≤3×1051 \leq N, Q \leq 3 \times 10^51≤N,Q≤3×105$
--   $1≤Ci,Pi≤N1 \leq C_i, P_i \leq N1≤Ci​,Pi​≤N$
--   When the operations are performed in order, immediately before each operation, cards $CiC_iCi​$ and $PiP_iPi​$ are in different piles.
--   When the operations are performed in order, immediately before each operation, card $PiP_iPi​$ is on top of some pile.
+-   $1 \leq N, Q \leq 3 \times 10^5$
+-   $1 \leq C_i, P_i \leq N$
+-   When the operations are performed in order, immediately before each operation, cards $C_i$ and $P_i$ are in different piles.
+-   When the operations are performed in order, immediately before each operation, card $P_i$ is on top of some pile.
 -   All input values are integers.
 
 ### Input
@@ -29,16 +29,16 @@ Find the number of cards in each pile after all operations are completed.
 The input is given from Standard Input in the following format:
 
 ```text
-$NNN$ $QQQ$
-$C1C_1C1​$ $P1P_1P1​$
-$C2C_2C2​$ $P2P_2P2​$
-$⋮\vdots⋮$
-$CQC_QCQ​$ $PQP_QPQ​$
+$N$ $Q$
+$C_1$ $P_1$
+$C_2$ $P_2$
+$\vdots$
+$C_Q$ $P_Q$
 ```
 
 ### Output
 
-Let $AiA_iAi​$ be the number of cards in pile $iii$ at the end. Output $A1,A2,…,ANA_1, A_2, \ldots, A_NA1​,A2​,…,AN​$ in this order, separated by spaces.
+Let $A_i$ be the number of cards in pile $i$ at the end. Output $A_1, A_2, \ldots, A_N$ in this order, separated by spaces.
 
 ### Sample Input 1
 

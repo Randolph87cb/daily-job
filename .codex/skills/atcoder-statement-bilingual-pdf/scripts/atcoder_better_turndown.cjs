@@ -33,6 +33,17 @@ function normalizeMathText(text) {
     .trim();
 }
 
+function extractLatexText(node) {
+  if (!node || typeof node.querySelector !== "function") {
+    return normalizeMathText(node?.textContent || "");
+  }
+  const annotationText = node.querySelector("annotation")?.textContent;
+  if (annotationText && annotationText.trim()) {
+    return normalizeMathText(annotationText);
+  }
+  return normalizeMathText(node.textContent || "");
+}
+
 function createTurndownService(document) {
   const turndownService = new TurndownService({ bulletListMarker: "-" });
 
@@ -63,27 +74,27 @@ function createTurndownService(document) {
       return node.nodeName === "VAR";
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.textContent);
+      const latex = extractLatexText(node);
       return latex ? `$${latex}$` : "";
     },
   });
 
   turndownService.addRule("inline-math", {
     filter(node) {
-      return node.tagName && node.tagName.toLowerCase() === "span" && node.className === "katex";
+      return node.tagName && node.tagName.toLowerCase() === "span" && node.classList?.contains("katex");
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.querySelector("annotation")?.textContent);
+      const latex = extractLatexText(node);
       return latex ? `$${latex}$` : "";
     },
   });
 
   turndownService.addRule("block-math", {
     filter(node) {
-      return node.tagName && node.tagName.toLowerCase() === "span" && node.className === "katex-display";
+      return node.tagName && node.tagName.toLowerCase() === "span" && node.classList?.contains("katex-display");
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.querySelector("annotation")?.textContent);
+      const latex = extractLatexText(node);
       if (!latex) {
         return "";
       }

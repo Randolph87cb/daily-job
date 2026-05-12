@@ -1,53 +1,53 @@
 # D - Card Pile Query
 
-分值：$400400400$ 分
+分值：$400$ 分
 
 ---
 
 ### Problem Statement
 
-There are $NNN$ cards and $NNN$ piles of cards.
+There are $N$ cards and $N$ piles of cards.
 
-有 $NNN$ 张卡片和 $NNN$ 堆卡片。
-
----
-
-The cards and the piles are numbered $1,2,…,N1, 2, \ldots, N1,2,…,N$. Initially, pile $iii$ contains only card $iii$.
-
-卡片和堆的编号为 $1,2,…,N1, 2, \ldots, N1,2,…,N$。初始时，第 $iii$ 堆只有卡片 $iii$。
+有 $N$ 张卡片和 $N$ 堆卡片。
 
 ---
 
-Perform the following operation for each $i=1,2,…,Qi = 1, 2, \ldots, Qi=1,2,…,Q$ in order:
+The cards and the piles are numbered $1, 2, \ldots, N$. Initially, pile $i$ contains only card $i$.
 
-按顺序对每个 $i=1,2,…,Qi = 1, 2, \ldots, Qi=1,2,…,Q$ 执行如下操作：
+卡片和堆的编号为 $1, 2, \ldots, N$。初始时，堆 $i$ 中只有卡片 $i$。
 
 ---
 
--   Move card $CiC_iCi​$ and all cards stacked on top of card $CiC_iCi​$, preserving their order, on top of card $PiP_iPi​$. It is guaranteed that immediately before performing the operation, cards $CiC_iCi​$ and $PiP_iPi​$ are in different piles, and card $PiP_iPi​$ is on top of some pile.
+Perform the following operation for each $i = 1, 2, \ldots, Q$ in order:
 
-- 将卡片 $CiC_iCi​$ 以及叠在它上面的所有卡片保持原有顺序，移到卡片 $PiP_iPi​$ 的顶部。题目保证执行该操作前，卡片 $CiC_iCi​$ 和 $PiP_iPi​$ 位于不同的堆中，且卡片 $PiP_iPi​$ 位于某一堆的顶部。
+按顺序对每个 $i = 1, 2, \ldots, Q$ 执行以下操作：
+
+---
+
+-   Move card $C_i$ and all cards stacked on top of card $C_i$, preserving their order, on top of card $P_i$. It is guaranteed that immediately before performing the operation, cards $C_i$ and $P_i$ are in different piles, and card $P_i$ is on top of some pile.
+
+- 将卡片 $C_i$ 以及堆在它上方的所有卡片保持原有顺序，移动到卡片 $P_i$ 的上方。题目保证在执行该操作前，卡片 $C_i$ 和 $P_i$ 位于不同的堆中，且卡片 $P_i$ 处于某个堆的顶部。
 
 ---
 
 Find the number of cards in each pile after all operations are completed.
 
-求所有操作完成后每一堆的卡片数量。
+求所有操作完成后每堆中的卡片数量。
 
 ---
 
 ### Constraints
 
--   $1≤N,Q≤3×1051 \leq N, Q \leq 3 \times 10^51≤N,Q≤3×105$
--   $1≤Ci,Pi≤N1 \leq C_i, P_i \leq N1≤Ci​,Pi​≤N$
--   When the operations are performed in order, immediately before each operation, cards $CiC_iCi​$ and $PiP_iPi​$ are in different piles.
--   When the operations are performed in order, immediately before each operation, card $PiP_iPi​$ is on top of some pile.
+-   $1 \leq N, Q \leq 3 \times 10^5$
+-   $1 \leq C_i, P_i \leq N$
+-   When the operations are performed in order, immediately before each operation, cards $C_i$ and $P_i$ are in different piles.
+-   When the operations are performed in order, immediately before each operation, card $P_i$ is on top of some pile.
 -   All input values are integers.
 
-- $1≤N,Q≤3×1051 \leq N, Q \leq 3 \times 10^51≤N,Q≤3×105$
-- $1≤Ci,Pi≤N1 \leq C_i, P_i \leq N1≤Ci​,Pi​≤N$
-- 按顺序执行操作时，每次操作前，卡片 $CiC_iCi​$ 和 $PiP_iPi​$ 位于不同的堆中。
-- 按顺序执行操作时，每次操作前，卡片 $PiP_iPi​$ 位于某一堆的顶部。
+- $1 \leq N, Q \leq 3 \times 10^5$
+- $1 \leq C_i, P_i \leq N$
+- 按顺序执行操作时，每次操作前，卡片 $C_i$ 和 $P_i$ 都位于不同的堆中。
+- 按顺序执行操作时，每次操作前，卡片 $P_i$ 都处于某个堆的顶部。
 - 所有输入值均为整数。
 
 ---
@@ -56,21 +56,21 @@ Find the number of cards in each pile after all operations are completed.
 
 The input is given from Standard Input in the following format:
 
-输入按如下格式从标准输入给出：
+输入按照以下格式从标准输入给出：
 
-$NNN$ $QQQ$  
-$C1C_1C1​$ $P1P_1P1​$  
-$C2C_2C2​$ $P2P_2P2​$  
-$⋮\vdots⋮$  
-$CQC_QCQ​$ $PQP_QPQ​$
+$N$ $Q$  
+$C_1$ $P_1$  
+$C_2$ $P_2$  
+$\vdots$  
+$C_Q$ $P_Q$
 
 ---
 
 ### Output
 
-Let $AiA_iAi​$ be the number of cards in pile $iii$ at the end. Output $A1,A2,…,ANA_1, A_2, \ldots, A_NA1​,A2​,…,AN​$ in this order, separated by spaces.
+Let $A_i$ be the number of cards in pile $i$ at the end. Output $A_1, A_2, \ldots, A_N$ in this order, separated by spaces.
 
-设 $AiA_iAi​$ 为最终第 $iii$ 堆的卡片数量。按顺序输出 $A1,A2,…,ANA_1, A_2, \ldots, A_NA1​,A2​,…,AN​$，数值之间用空格分隔。
+设 $A_i$ 为最终堆 $i$ 中的卡片数量。按顺序输出 $A_1, A_2, \ldots, A_N$，数值之间用空格分隔。
 
 ---
 
