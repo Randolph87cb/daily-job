@@ -4,6 +4,7 @@ import argparse
 import json
 import os
 import re
+import time
 import subprocess
 import sys
 from pathlib import Path
@@ -53,6 +54,7 @@ DEFAULT_REQUEST_HEADERS = {
     "Cache-Control": "no-cache",
     "Pragma": "no-cache",
 }
+DEFAULT_FETCH_RETRIES = 4
 
 
 def parse_args() -> argparse.Namespace:
@@ -281,6 +283,10 @@ def run_powershell_inline_json(command: str) -> dict[str, object]:
             f"stderr={result.stderr}"
         )
     return parse_json_tail(result.stdout)
+
+
+def sleep_before_retry(attempt: int) -> None:
+    time.sleep(min(attempt, 3))
 
 
 def build_session_arguments(
@@ -659,15 +665,34 @@ def fetch_html_via_cookie_jar(
 ) -> tuple[str, bool, str]:
     session = requests.Session()
     session.cookies.update(cookie_jar)
-    response = session.get(
-        tasks_print_url(contest),
-        timeout=timeout,
-        headers={
-            **DEFAULT_REQUEST_HEADERS,
-            "Referer": contest_base_url(contest),
-        },
-    )
-    response.raise_for_status()
+    response = None
+    last_error: Exception | None = None
+    for attempt in range(1, DEFAULT_FETCH_RETRIES + 1):
+        try:
+            response = session.get(
+                tasks_print_url(contest),
+                timeout=timeout,
+                headers={
+                    **DEFAULT_REQUEST_HEADERS,
+                    "Referer": contest_base_url(contest),
+                },
+            )
+            response.raise_for_status()
+            break
+        except requests.RequestException as exc:
+            last_error = exc
+            if attempt == DEFAULT_FETCH_RETRIES:
+                raise
+            print(
+                "[fetch] Cookie-based HTTP fetch retry "
+                f"{attempt}/{DEFAULT_FETCH_RETRIES} failed: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+            sleep_before_retry(attempt)
+    if response is None:
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError("Did not receive an HTTP response while fetching AtCoder statements.")
     content = response.text
     final_url = response.url
     requires_login, reason = html_requires_login(content, final_url, check_selector)
@@ -686,6 +711,7 @@ def fetch_html_via_powershell_request(
     referer_url = contest_base_url(contest)
     cookie_header = cookie_header_value(cookie_jar)
     command = f"""
+$ErrorActionPreference = 'Stop'
 $headers = @{{
     'User-Agent' = {json.dumps(DEFAULT_REQUEST_HEADERS['User-Agent'])}
     'Accept' = {json.dumps(DEFAULT_REQUEST_HEADERS['Accept'])}
@@ -704,12 +730,35 @@ $response = Invoke-WebRequest -Uri {json.dumps(target_url)} -Headers $headers -T
     content = $response.Content
 }} | ConvertTo-Json -Depth 4 -Compress
 """
-    payload = run_powershell_inline_json(command)
-    status_code = int(payload.get("statusCode", 0))
-    if status_code >= 400:
-        raise RuntimeError(f"PowerShell web request returned HTTP {status_code} for {target_url}")
+    payload: dict[str, object] | None = None
+    last_error: Exception | None = None
+    for attempt in range(1, DEFAULT_FETCH_RETRIES + 1):
+        try:
+            payload = run_powershell_inline_json(command)
+            status_code = int(payload.get("statusCode", 0))
+            if status_code <= 0:
+                raise RuntimeError(f"PowerShell web request returned an empty status for {target_url}")
+            if status_code >= 400:
+                raise RuntimeError(f"PowerShell web request returned HTTP {status_code} for {target_url}")
+            break
+        except Exception as exc:
+            last_error = exc
+            if attempt == DEFAULT_FETCH_RETRIES:
+                raise
+            print(
+                "[fetch] PowerShell web request retry "
+                f"{attempt}/{DEFAULT_FETCH_RETRIES} failed: {type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+            sleep_before_retry(attempt)
+    if payload is None:
+        if last_error is not None:
+            raise last_error
+        raise RuntimeError(f"PowerShell web request produced no payload for {target_url}")
     content = str(payload.get("content") or "")
     final_url = str(payload.get("finalUrl") or target_url)
+    if not content.strip():
+        raise RuntimeError(f"PowerShell web request returned empty content for {target_url}")
     requires_login, reason = html_requires_login(content, final_url, check_selector)
     if requires_login:
         return "", False, reason
