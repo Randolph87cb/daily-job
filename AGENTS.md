@@ -54,7 +54,8 @@
 - 如果题解目录中的产物命名或导出方式发生变化，至少同步更新：
   - `README.md`
   - 当前文件 `AGENTS.md`
-  - `.codex/skills/atcoder-editorial-workflow/references/题解撰写要求.md`
+  - `.codex/skills/atcoder-editorial-workflow/SKILL.md`
+  - 如涉及统一题解规范，再同步全局 skill `algorithm-editorial-reference` 的对应说明
 
 ## 临时文件与忽略规则
 

@@ -27,8 +27,9 @@ atcoder-output/<contest>/editorials/
 
 如果用户要求修改的是“题解统一写法”，先改这两个文件，再批量动单题：
 
-- `references/题解撰写要求.md`
-- `references/代码规范.md`
+- 全局 skill `algorithm-editorial-reference/references/题解撰写要求.md`
+- 全局 skill `algorithm-editorial-reference/references/代码规范.md`
+- 如果变更同时影响项目导出流程，再补改本地 `references/workflow.md`
 
 典型触发场景：
 
@@ -39,6 +40,7 @@ atcoder-output/<contest>/editorials/
 
 ## 3. 当前稳定下来的题解要求
 
+- 题解与参考实现的正文规范统一遵守全局 skill `algorithm-editorial-reference`
 - 默认不保留单独的“题目信息”章节
 - 固定结构为：
   1. 标题
@@ -52,6 +54,7 @@ atcoder-output/<contest>/editorials/
 - 能用普通数组就不用 `vector`
 - 数组能放 `main` 外时，优先放到 `main` 外
 - 如果必须保留容器，正文里要解释为什么
+- 默认只基于当前仓库内的题面 Markdown、本地样例题解和全局规范撰写题解；除非用户明确要求，否则不要用网络搜索补解法或代码。
 
 ## 4. 导出规则
 

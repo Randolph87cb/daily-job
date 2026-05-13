@@ -8,8 +8,9 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 ## 概览
 
 - 先同步规则，再改单题 Markdown，再重导出，再验证，再更新工作记录。
-- 题解正文规则以 `references/题解撰写要求.md` 和 `references/代码规范.md` 为准。
+- 题解正文与参考实现规范统一复用全局 skill `algorithm-editorial-reference`，不要在本 skill 目录下重复维护一份本地规范。
 - 批量导出优先使用 `scripts/export-editorials.ps1`，不要每次临时拼一套 `md2pdf` 命令。
+- 默认基于当前仓库里的题面 Markdown、本地样例题解与全局规范完成题解；除非用户明确要求，否则不要使用网络搜索补题解。
 
 ## 何时使用
 
@@ -22,8 +23,8 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 
 1. 先确认目标题解目录，例如 `atcoder-output/<contest>/editorials/`。
 2. 如果用户的新要求会改变模板或代码风格，先更新：
-   - `references/题解撰写要求.md`
-   - `references/代码规范.md`
+   - 全局 skill `algorithm-editorial-reference` 的对应规范文档或说明
+   - 本 skill 下与项目流程有关的说明文档，例如 `references/workflow.md`
 3. 再修改单题题解 Markdown，不要先导出后回头补正文。
 4. 单题题解改完后，运行 `scripts/export-editorials.ps1` 重生成：
    - 单题 PDF
@@ -54,6 +55,11 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 
 - `references/workflow.md`
   - 需要看完整检查清单、命名规则、导出坑点和提交流程时再读。
+
+### global skills
+
+- `algorithm-editorial-reference`
+  - 需要看题解固定结构、公式写法、教学型 `C++` 代码规范时，读取这个全局 skill 及其 `references/题解撰写要求.md`、`references/代码规范.md`。
 
 ### scripts/
 

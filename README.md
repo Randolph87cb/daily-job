@@ -25,7 +25,7 @@
 
 ## 目录说明
 
-- `.codex/skills/` 保存项目内使用的本地 skill，实现和项目流程一起维护；当前已包含题面抓取翻译、题解撰写导出、签到表维护和课时统计等流程。
+- `.codex/skills/` 保存项目内使用的本地 skill，实现和项目流程一起维护；当前已包含题面抓取翻译、题解撰写导出、签到表维护和课时统计等流程。其中题解 workflow 负责项目目录与导出流程，正文与代码规范复用全局 `algorithm-editorial-reference`。
 - `AI工作记录/` 保存当前项目的任务摘要、关键决策、验证结果和 skill 沉淀线索。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
 - `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。
