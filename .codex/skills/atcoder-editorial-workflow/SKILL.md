@@ -39,13 +39,14 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 在仓库根目录执行：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1" `
+pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1" `
   -EditorialDir ".\atcoder-output\abc457-browser-pipeline\abc457\editorials"
 ```
 
 - 脚本会自动识别 `*.editorial.md`。
 - 单题 PDF 输出为 `A.pdf`、`B.pdf` 这类命名。
 - 合并版输出为 `<contest>.editorials.md` 和 `<CONTEST>-editorials.pdf`。
+- 当前导出目录包含中文标题时，优先使用 `pwsh` 或当前 PowerShell 7 会话执行，避免 `powershell.exe` 读取 UTF-8 脚本时把中文常量导成乱码。
 
 ## 资源
 

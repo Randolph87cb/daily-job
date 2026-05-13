@@ -60,7 +60,7 @@ atcoder-output/<contest>/editorials/
 推荐调用方式：
 
 ```powershell
-powershell -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1" `
+pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial-workflow\scripts\export-editorials.ps1" `
   -EditorialDir ".\atcoder-output\abc457-browser-pipeline\abc457\editorials"
 ```
 
@@ -92,6 +92,7 @@ powershell -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial-work
 
 - 调用 `md2pdf` 时，优先进入 `editorials/` 目录后，用相对文件名导出。
 - 不要混用“绝对输入路径 + 不合适的 output-dir”，否则可能在 `editorials/` 下面误生成一层嵌套目录。
+- 如果脚本里包含中文标题或中文常量，优先用 `pwsh` / PowerShell 7 执行；直接用 `powershell.exe` 可能把合并版标题导成乱码。
 - 如果导出过程产生 `.tmp\md2pdf` 之类的一次性缓存，提交前清掉。
 
 ## 7. 检查清单
