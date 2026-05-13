@@ -260,6 +260,29 @@ def parse_json_tail(raw_text: str) -> dict[str, object]:
     return parsed
 
 
+def run_powershell_inline_json(command: str) -> dict[str, object]:
+    result = subprocess.run(
+        [
+            "powershell",
+            "-ExecutionPolicy",
+            "Bypass",
+            "-Command",
+            command,
+        ],
+        text=True,
+        encoding="utf-8",
+        errors="replace",
+        capture_output=True,
+    )
+    if result.returncode != 0:
+        raise RuntimeError(
+            "PowerShell inline command failed.\n"
+            f"stdout={result.stdout}\n"
+            f"stderr={result.stderr}"
+        )
+    return parse_json_tail(result.stdout)
+
+
 def build_session_arguments(
     *,
     session_root: Path | None,
@@ -470,6 +493,15 @@ def state_file_cookies(state_path: Path) -> list[dict[str, object]]:
     return [cookie for cookie in cookies if isinstance(cookie, dict)]
 
 
+def cookie_header_value(cookie_jar: requests.cookies.RequestsCookieJar | None) -> str:
+    if cookie_jar is None:
+        return ""
+    parts: list[str] = []
+    for cookie in cookie_jar:
+        parts.append(f"{cookie.name}={cookie.value}")
+    return "; ".join(parts)
+
+
 def requests_cookie_jar_from_state_file(state_path: Path) -> requests.cookies.RequestsCookieJar:
     jar = requests.cookies.RequestsCookieJar()
     for cookie in state_file_cookies(state_path):
@@ -627,23 +659,57 @@ def fetch_html_via_cookie_jar(
 ) -> tuple[str, bool, str]:
     session = requests.Session()
     session.cookies.update(cookie_jar)
-    response = None
-    for current_url in [contest_base_url(contest), tasks_list_url(contest), tasks_print_url(contest)]:
-        response = session.get(
-            current_url,
-            timeout=timeout,
-            headers={
-                **DEFAULT_REQUEST_HEADERS,
-                "Referer": contest_base_url(contest),
-            },
-        )
-        response.raise_for_status()
-
-    if response is None:
-        raise RuntimeError("Did not receive an HTTP response while fetching AtCoder statements.")
-
+    response = session.get(
+        tasks_print_url(contest),
+        timeout=timeout,
+        headers={
+            **DEFAULT_REQUEST_HEADERS,
+            "Referer": contest_base_url(contest),
+        },
+    )
+    response.raise_for_status()
     content = response.text
     final_url = response.url
+    requires_login, reason = html_requires_login(content, final_url, check_selector)
+    if requires_login:
+        return "", False, reason
+    return content, True, reason
+
+
+def fetch_html_via_powershell_request(
+    contest: str,
+    timeout: int,
+    check_selector: str,
+    cookie_jar: requests.cookies.RequestsCookieJar | None = None,
+) -> tuple[str, bool, str]:
+    target_url = tasks_print_url(contest)
+    referer_url = contest_base_url(contest)
+    cookie_header = cookie_header_value(cookie_jar)
+    command = f"""
+$headers = @{{
+    'User-Agent' = {json.dumps(DEFAULT_REQUEST_HEADERS['User-Agent'])}
+    'Accept' = {json.dumps(DEFAULT_REQUEST_HEADERS['Accept'])}
+    'Accept-Language' = {json.dumps(DEFAULT_REQUEST_HEADERS['Accept-Language'])}
+    'Cache-Control' = {json.dumps(DEFAULT_REQUEST_HEADERS['Cache-Control'])}
+    'Pragma' = {json.dumps(DEFAULT_REQUEST_HEADERS['Pragma'])}
+    'Referer' = {json.dumps(referer_url)}
+}}
+if ({json.dumps(cookie_header)}) {{
+    $headers['Cookie'] = {json.dumps(cookie_header)}
+}}
+$response = Invoke-WebRequest -Uri {json.dumps(target_url)} -Headers $headers -TimeoutSec {timeout}
+[ordered]@{{
+    statusCode = [int]$response.StatusCode
+    finalUrl = [string]$response.BaseResponse.ResponseUri
+    content = $response.Content
+}} | ConvertTo-Json -Depth 4 -Compress
+"""
+    payload = run_powershell_inline_json(command)
+    status_code = int(payload.get("statusCode", 0))
+    if status_code >= 400:
+        raise RuntimeError(f"PowerShell web request returned HTTP {status_code} for {target_url}")
+    content = str(payload.get("content") or "")
+    final_url = str(payload.get("finalUrl") or target_url)
     requires_login, reason = html_requires_login(content, final_url, check_selector)
     if requires_login:
         return "", False, reason
@@ -670,7 +736,22 @@ def fetch_html_via_storage_state(
 
     cookie_jar = load_session_cookie_jar(session_metadata)
     if cookie_jar is not None and len(cookie_jar) > 0:
-        return fetch_html_via_cookie_jar(contest, timeout, cookie_jar, check_selector)
+        try:
+            return fetch_html_via_cookie_jar(contest, timeout, cookie_jar, check_selector)
+        except requests.RequestException as exc:
+            print(
+                "[fetch] Cookie-based HTTP fetch failed; falling back to Playwright. "
+                f"reason={type(exc).__name__}: {exc}",
+                file=sys.stderr,
+            )
+    try:
+        return fetch_html_via_powershell_request(contest, timeout, check_selector, cookie_jar)
+    except RuntimeError as exc:
+        print(
+            "[fetch] PowerShell web request failed; falling back to Playwright. "
+            f"reason={exc}",
+            file=sys.stderr,
+        )
 
     with sync_playwright() as playwright:
         browser_launcher = getattr(playwright, playwright_browser)
@@ -688,15 +769,7 @@ def fetch_html_via_storage_state(
 
         try:
             page = context.new_page()
-            warmup_urls = [
-                contest_base_url(contest),
-                tasks_list_url(contest),
-                goto_url,
-            ]
-            response = None
-            for current_url in warmup_urls:
-                response = page.goto(current_url, wait_until="domcontentloaded", timeout=timeout_ms)
-                page.wait_for_load_state("networkidle", timeout=timeout_ms)
+            response = page.goto(goto_url, wait_until="domcontentloaded", timeout=timeout_ms)
             page.wait_for_load_state("networkidle", timeout=timeout_ms)
             final_url = page.url
             content = page.content()
