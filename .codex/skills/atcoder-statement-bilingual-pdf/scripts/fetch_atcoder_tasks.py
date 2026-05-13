@@ -42,6 +42,17 @@ CLOUDFLARE_TEXT_PATTERNS = [
     "just a moment",
     "cloudflare",
 ]
+DEFAULT_REQUEST_HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/136.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.9",
+    "Cache-Control": "no-cache",
+    "Pragma": "no-cache",
+}
 
 
 def parse_args() -> argparse.Namespace:
@@ -418,6 +429,7 @@ def refresh_browser_session_login(
         contest_base_url(contest),
         "-Url",
         contest_base_url(contest),
+        "-ManualOpen",
     ]
     if login_check_selector.strip():
         arguments.extend(["-CheckSelector", login_check_selector.strip()])
@@ -456,6 +468,22 @@ def state_file_cookies(state_path: Path) -> list[dict[str, object]]:
     if not isinstance(cookies, list):
         return []
     return [cookie for cookie in cookies if isinstance(cookie, dict)]
+
+
+def requests_cookie_jar_from_state_file(state_path: Path) -> requests.cookies.RequestsCookieJar:
+    jar = requests.cookies.RequestsCookieJar()
+    for cookie in state_file_cookies(state_path):
+        name = cookie.get("name")
+        value = cookie.get("value")
+        if not name or value is None:
+            continue
+        domain = str(cookie.get("domain") or "")
+        path = str(cookie.get("path") or "/")
+        if domain:
+            jar.set(str(name), str(value), domain=domain, path=path)
+        else:
+            jar.set(str(name), str(value), path=path)
+    return jar
 
 
 def directory_has_entries(path: Path | None) -> bool:
@@ -536,6 +564,28 @@ def storage_state_from_cookie_jar(cookie_jar) -> dict[str, object]:
         cookies.append(item)
     return {"cookies": cookies, "origins": []}
 
+
+def load_session_cookie_jar(
+    session_metadata: dict[str, object],
+) -> requests.cookies.RequestsCookieJar | None:
+    state_path = Path(str(session_metadata["statePath"]))
+    if state_path.is_file():
+        cookie_jar = requests_cookie_jar_from_state_file(state_path)
+        if len(cookie_jar) > 0:
+            return cookie_jar
+
+    profile_path_raw = session_metadata.get("profilePath")
+    profile_path = Path(str(profile_path_raw)) if profile_path_raw else None
+    if profile_path is not None and profile_path.exists() and browser_cookie3 is not None:
+        cookie_jar = load_profile_cookie_jar(
+            str(session_metadata.get("browser") or DEFAULT_SESSION_BROWSER),
+            profile_path,
+        )
+        if len(cookie_jar) > 0:
+            return cookie_jar
+
+    return None
+
 def html_requires_login(
     page_html: str,
     final_url: str,
@@ -569,6 +619,37 @@ def html_requires_login(
     return False, "no_login_option_detected"
 
 
+def fetch_html_via_cookie_jar(
+    contest: str,
+    timeout: int,
+    cookie_jar: requests.cookies.RequestsCookieJar,
+    check_selector: str,
+) -> tuple[str, bool, str]:
+    session = requests.Session()
+    session.cookies.update(cookie_jar)
+    response = None
+    for current_url in [contest_base_url(contest), tasks_list_url(contest), tasks_print_url(contest)]:
+        response = session.get(
+            current_url,
+            timeout=timeout,
+            headers={
+                **DEFAULT_REQUEST_HEADERS,
+                "Referer": contest_base_url(contest),
+            },
+        )
+        response.raise_for_status()
+
+    if response is None:
+        raise RuntimeError("Did not receive an HTTP response while fetching AtCoder statements.")
+
+    content = response.text
+    final_url = response.url
+    requires_login, reason = html_requires_login(content, final_url, check_selector)
+    if requires_login:
+        return "", False, reason
+    return content, True, reason
+
+
 def fetch_html_via_storage_state(
     contest: str,
     timeout: int,
@@ -583,9 +664,13 @@ def fetch_html_via_storage_state(
     playwright_browser = normalize_browser_name(browser_name)
     channel_name = playwright_channel_name(browser_name)
     timeout_ms = timeout * 1000
-    launch_kwargs: dict[str, object] = {"headless": False}
+    launch_kwargs: dict[str, object] = {"headless": True}
     if channel_name:
         launch_kwargs["channel"] = channel_name
+
+    cookie_jar = load_session_cookie_jar(session_metadata)
+    if cookie_jar is not None and len(cookie_jar) > 0:
+        return fetch_html_via_cookie_jar(contest, timeout, cookie_jar, check_selector)
 
     with sync_playwright() as playwright:
         browser_launcher = getattr(playwright, playwright_browser)
@@ -623,6 +708,7 @@ def fetch_html_via_storage_state(
             return content, True, reason
         finally:
             context.close()
+            browser.close()
 
 
 def fetch_html(
@@ -732,10 +818,7 @@ def fetch_html(
     response = session.get(
         url,
         timeout=timeout,
-        headers={
-            "User-Agent": "Mozilla/5.0 (compatible; AtCoderStatementFetcher/1.0)",
-            "Referer": contest_base_url(contest),
-        },
+        headers={**DEFAULT_REQUEST_HEADERS, "Referer": contest_base_url(contest)},
     )
     response.raise_for_status()
     return response.text
