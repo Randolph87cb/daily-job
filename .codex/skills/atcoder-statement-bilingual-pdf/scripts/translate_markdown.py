@@ -379,6 +379,19 @@ def is_input_intro_block(block: str) -> bool:
     )
 
 
+def normalize_bilingual_comparison_text(text: str) -> str:
+    normalized = text.replace("\r\n", "\n").strip()
+    normalized = re.sub(r"\n{3,}", "\n\n", normalized)
+    normalized = re.sub(r"[ \t]+", " ", normalized)
+    return normalized
+
+
+def blocks_are_effectively_identical(source_block: str, translated_block: str) -> bool:
+    return normalize_bilingual_comparison_text(source_block) == normalize_bilingual_comparison_text(
+        translated_block
+    )
+
+
 def fenced_code_content(block: str) -> str:
     match = re.match(r"```[^\n]*\n([\s\S]*?)\n```$", block.strip())
     if match:
@@ -500,14 +513,23 @@ def render_section_groups(section: Section) -> list[str]:
                 else:
                     groups.append(rendered)
                 continue
-            groups.append("\n\n".join([source_block, translated_block]))
+            if blocks_are_effectively_identical(source_block, translated_block):
+                groups.append(source_block)
+            else:
+                groups.append("\n\n".join([source_block, translated_block]))
             continue
 
         if is_input and is_input_intro_block(source_block):
-            groups.append("\n\n".join([source_block, translated_block]))
+            if blocks_are_effectively_identical(source_block, translated_block):
+                groups.append(source_block)
+            else:
+                groups.append("\n\n".join([source_block, translated_block]))
             continue
 
-        groups.append("\n\n".join([source_block, translated_block]))
+        if blocks_are_effectively_identical(source_block, translated_block):
+            groups.append(source_block)
+        else:
+            groups.append("\n\n".join([source_block, translated_block]))
 
     normalized_groups = [group.strip() for group in groups if group.strip()]
     if not normalized_groups:
@@ -518,6 +540,8 @@ def render_section_groups(section: Section) -> list[str]:
 
 
 def fallback_bilingual_markdown(source_text: str, translated_text: str) -> str:
+    if blocks_are_effectively_identical(source_text, translated_text):
+        return source_text.strip() + "\n"
     return (
         f"{translated_text.strip()}\n\n---\n\n{source_text.strip()}\n"
     )
