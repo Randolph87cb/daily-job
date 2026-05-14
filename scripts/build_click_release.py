@@ -198,44 +198,44 @@ OPENAI_BASE_URL=
 
 
 def readme_text() -> str:
-    return """AtCoder Delivery Click Package
+    return """AtCoder 便携执行包
 
-Quick start
-1. Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY`.
-2. Ensure you have already logged in to AtCoder in a local browser such as Chrome or Edge.
-3. Double-click `run.bat`, then enter a contest id such as `abc457`.
+快速开始
+1. 将 `.env.example` 复制为 `.env`，并填写 `OPENAI_API_KEY`。
+2. 确认本机浏览器（如 Chrome 或 Edge）里已经登录 AtCoder。
+3. 双击 `run.bat`，然后输入比赛编号，例如 `abc457`。
 
-Notes
-- This portable package already contains the Python runtime, node.exe and a local md2pdf CLI.
-- The default auth mode is `browser-cookies`, so it no longer depends on Codex or browser-session-manager.
-- The default package config is optimized for speed and resumability:
-  - statement PDF export is disabled by default;
-  - existing outputs are reused by default.
-- If you want full statement PDFs for a run, use:
+说明
+- 这个便携包已经自带 Python 运行时、`node.exe` 和本地 `md2pdf` CLI。
+- 默认鉴权方式是 `browser-cookies`，因此不再依赖 Codex 或 `browser-session-manager`。
+- 当前默认配置偏向“更快、可恢复”：
+  - 默认不导出题面 PDF；
+  - 默认复用已有输出，不强制覆盖。
+- 如果某次运行需要导出完整题面 PDF，可以执行：
   - `run.bat abc457 --with-pdf`
-- If you want to force a full rerun from scratch, use:
+- 如果某次运行需要从头强制重跑，可以执行：
   - `run.bat abc457 --overwrite`
-- If the browser cookies are expired, open AtCoder in your browser and log in again before rerunning.
-- Outputs are written to the `output/` directory.
-- The editable workflow config is `scripts/atcoder_delivery.release.json`.
+- 如果浏览器 cookies 已失效，请先在浏览器里重新登录 AtCoder，再重新运行。
+- 默认输出目录是 `output/`。
+- 可编辑配置文件是 `scripts/atcoder_delivery.release.json`。
 
-What is already bundled
-- Python runtime
-- Python packages used by this workflow
-- node.exe
-- local md2pdf CLI
-- AtCoder statement/editorial workflow scripts
+包内已经包含
+- Python 运行时
+- 当前流程使用的 Python 依赖包
+- `node.exe`
+- 本地 `md2pdf` CLI
+- AtCoder 题面抓取、翻译、题解导出所需脚本
 
-What is still required on the target machine
-- Windows with PowerShell available
-- Network access to `atcoder.jp`
-- Network access to your configured OpenAI-compatible API endpoint
-- A valid `.env` with `OPENAI_API_KEY`
-- A supported local browser profile with readable cookies, and an active AtCoder login
+目标机器仍需满足
+- Windows，且可使用 PowerShell
+- 能访问 `atcoder.jp`
+- 能访问你配置的 OpenAI 兼容接口
+- 有有效的 `.env`，并填写 `OPENAI_API_KEY`
+- 本机存在可读取 cookies 的受支持浏览器，并且该浏览器里已经登录 AtCoder
 
-Not guaranteed
-- This package is not a true zero-prerequisite package for arbitrary machines.
-- If the target machine has no supported browser, no AtCoder login, blocked network, or no API key, it will not complete successfully.
+当前不能保证
+- 这不是对任意机器都完全零前提的包。
+- 如果目标机器没有受支持浏览器、没有 AtCoder 登录态、网络受限，或者没有 API Key，流程将无法成功完成。
 """
 
 
