@@ -70,6 +70,12 @@ python .\scripts\build_click_release.py --clean
   - 已有输出默认复用；
   - 需要完整 PDF 时可显式传 `--with-pdf`；
   - 需要从头重跑时可显式传 `--overwrite`。
+- 这个发布包已经内置 `Python`、`node.exe`、本地 `md2pdf` CLI 和流程脚本，因此不依赖对方额外安装这些组件；
+  但它仍然依赖：
+  - Windows + PowerShell
+  - 有效的 `.env` / `OPENAI_API_KEY`
+  - 可访问 `atcoder.jp` 与模型 API 的网络
+  - 本机可读取的浏览器 cookies，以及已登录的 AtCoder 账户
 
 ## 文档维护约定
 

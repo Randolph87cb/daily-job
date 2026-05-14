@@ -218,6 +218,24 @@ Notes
 - If the browser cookies are expired, open AtCoder in your browser and log in again before rerunning.
 - Outputs are written to the `output/` directory.
 - The editable workflow config is `scripts/atcoder_delivery.release.json`.
+
+What is already bundled
+- Python runtime
+- Python packages used by this workflow
+- node.exe
+- local md2pdf CLI
+- AtCoder statement/editorial workflow scripts
+
+What is still required on the target machine
+- Windows with PowerShell available
+- Network access to `atcoder.jp`
+- Network access to your configured OpenAI-compatible API endpoint
+- A valid `.env` with `OPENAI_API_KEY`
+- A supported local browser profile with readable cookies, and an active AtCoder login
+
+Not guaranteed
+- This package is not a true zero-prerequisite package for arbitrary machines.
+- If the target machine has no supported browser, no AtCoder login, blocked network, or no API key, it will not complete successfully.
 """
 
 
