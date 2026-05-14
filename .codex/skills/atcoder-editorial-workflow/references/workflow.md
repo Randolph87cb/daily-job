@@ -56,7 +56,40 @@ atcoder-output/<contest>/editorials/
 - 如果必须保留容器，正文里要解释为什么
 - 默认只基于当前仓库内的题面 Markdown、本地样例题解和全局规范撰写题解；除非用户明确要求，否则不要用网络搜索补解法或代码。
 
-## 4. 导出规则
+## 4. 委派模式约束
+
+当主线程把题解任务拆给多个 subagent 时，按下面的边界执行：
+
+- 先按题号或文件集合划分 ownership，确保 write set 不重叠。
+- subagent 默认只负责自己名下的单题 Markdown：
+  - `<contest>_a.editorial.md`
+  - `<contest>_b.editorial.md`
+  - 依此类推
+- subagent 不要自行执行以下动作：
+  - `git status`
+  - `git add`
+  - `git commit`
+  - `git push`
+  - 批量导出整套 `editorials/`
+  - 修改自己 ownership 之外的题解文件
+- 主线程统一负责：
+  - 规则同步
+  - ownership 划分
+  - 汇总 subagent 结果
+  - 抽查复杂题代码注释
+  - 编译 / 样例验证
+  - 运行 `export-editorials.ps1`
+  - 更新工作记录
+  - 最终 Git 提交与推送
+- subagent 回报时至少包含：
+  - 修改了哪些文件
+  - 每题核心思路
+  - 做了哪些验证
+  - 是否还有未验证风险
+
+如果主线程没有显式授权 Git 或导出动作，默认视为禁止。
+
+## 5. 导出规则
 
 使用 `scripts/export-editorials.ps1`，不要临时重拼一套导出命令。
 
@@ -79,7 +112,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 - 生成合并版 PDF：
   - `<CONTEST>-editorials.pdf`
 
-## 5. 合并版规则
+## 6. 合并版规则
 
 - 合并版 Markdown 顶部写：
   - `# <CONTEST> 题解合集`
@@ -91,14 +124,14 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 
 - 分页标记只应出现在合并版，不要写回单题 Markdown。
 
-## 6. 导出时的坑点
+## 7. 导出时的坑点
 
 - 调用 `md2pdf` 时，优先进入 `editorials/` 目录后，用相对文件名导出。
 - 不要混用“绝对输入路径 + 不合适的 output-dir”，否则可能在 `editorials/` 下面误生成一层嵌套目录。
 - 如果脚本里包含中文标题或中文常量，优先用 `pwsh` / PowerShell 7 执行；直接用 `powershell.exe` 可能把合并版标题导成乱码。
 - 如果导出过程产生 `.tmp\md2pdf` 之类的一次性缓存，提交前清掉。
 
-## 7. 检查清单
+## 8. 检查清单
 
 改完并导出后，至少检查：
 
@@ -112,8 +145,9 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 4. 如果统一改过标题，例如 `## 参考实现`，单题和合并版里都要命中
 5. 至少抽查 `1` 篇复杂题题解，确认核心代码不是零注释，且关键函数 / 关键循环前有说明性注释
 6. Git 状态里不要夹带 `.tmp/`、误生成目录或导出缓存
+7. 如果这次使用过委派模式，确认没有 subagent 残留的临时提交、额外导出或越权改动
 
-## 8. 记录与提交
+## 9. 记录与提交
 
 完成后同步：
 

@@ -11,6 +11,7 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 - 题解正文与参考实现规范统一复用全局 skill `algorithm-editorial-reference`，不要在本 skill 目录下重复维护一份本地规范。
 - 批量导出优先使用 `scripts/export-editorials.ps1`，不要每次临时拼一套 `md2pdf` 命令。
 - 默认基于当前仓库里的题面 Markdown、本地样例题解与全局规范完成题解；除非用户明确要求，否则不要使用网络搜索补题解。
+- 在委派模式下，主线程负责拆分任务、统一导出、最终验证、工作记录与 Git；subagent 只负责自己名下的题解 Markdown，不要自行执行 `git add`、`git commit`、`git push`。
 
 ## 何时使用
 
@@ -35,6 +36,10 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 7. 最后更新：
    - `AI工作记录/records/YYYY/MM/*.md`
    - 如有流程沉淀变化，再更新 `AI工作记录/skill-backlog.md`
+8. 如果使用委派模式：
+   - 先按题目或文件划分不重叠 ownership，再下发 subagent。
+   - subagent 只改自己负责的 `*.editorial.md`，不要顺手改导出脚本、其他题解或 Git 状态。
+   - 汇总、导出、抽查、提交与推送统一由主线程执行。
 
 ## 导出
 
