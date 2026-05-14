@@ -1,10 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import time
 from pathlib import Path
 
 import fetch_atcoder_tasks
 import translate_markdown
+
+MAX_BATCH_BLOCKS = 48
+MAX_BATCH_CHARS = 18000
 
 
 def parse_args() -> argparse.Namespace:
@@ -148,7 +152,32 @@ def resolve_contest_id(args: argparse.Namespace) -> str:
     return resolved
 
 
+def batched_model_entries(
+    entries: list[tuple[int, int, str]],
+) -> list[list[tuple[int, int, str]]]:
+    batches: list[list[tuple[int, int, str]]] = []
+    current: list[tuple[int, int, str]] = []
+    current_chars = 0
+
+    for entry in entries:
+        block_chars = len(entry[2])
+        if current and (
+            len(current) >= MAX_BATCH_BLOCKS or current_chars + block_chars > MAX_BATCH_CHARS
+        ):
+            batches.append(current)
+            current = []
+            current_chars = 0
+        current.append(entry)
+        current_chars += block_chars
+
+    if current:
+        batches.append(current)
+
+    return batches
+
+
 def main() -> None:
+    pipeline_started = time.perf_counter()
     args = parse_args()
     contest_id = resolve_contest_id(args)
     translate_markdown.load_dotenv(args.env_file)
@@ -185,6 +214,7 @@ def main() -> None:
         print(f"[pipeline] browser_cookies={args.browser_cookies}")
 
     print("[pipeline] fetching english statements")
+    fetch_started = time.perf_counter()
     page_html = fetch_atcoder_tasks.fetch_html(
         contest_id,
         args.timeout,
@@ -199,10 +229,12 @@ def main() -> None:
         login_check_selector=args.login_check_selector,
     )
     extracted_tasks = list(fetch_atcoder_tasks.extract_tasks(page_html, contest_id))
+    fetch_seconds = time.perf_counter() - fetch_started
     for index, (slug, markdown) in enumerate(extracted_tasks, start=1):
         output_path = english_dir / f"{slug}.en.md"
         output_path.write_text(markdown, encoding="utf-8")
         print(f"[pipeline] [fetch {index}/{len(extracted_tasks)}] wrote {output_path}")
+    print(f"[pipeline] fetch_seconds={fetch_seconds:.2f}")
 
     glossary = translate_markdown.load_glossary(
         Path(__file__).resolve().parent.parent / "translation_assets" / "algorithm_glossary.json"
@@ -226,6 +258,10 @@ def main() -> None:
 
     total = len(input_files)
     output_paths: list[Path] = []
+    documents: list[dict[str, object]] = []
+    model_entries: list[tuple[int, int, str]] = []
+    translation_started = time.perf_counter()
+
     for index, source_path in enumerate(input_files, start=1):
         output_path = chinese_dir / translate_markdown.translated_name(source_path)
         if output_path.exists() and not args.overwrite:
@@ -236,7 +272,64 @@ def main() -> None:
         print(f"[pipeline] [translate {index}/{total}] translating {source_path.name}")
         source_text = source_path.read_text(encoding="utf-8")
         source_blocks = translate_markdown.split_markdown_content_blocks(source_text)
-        translated_blocks = translate_markdown.translate_markdown_blocks(source_text, translator)
+        translated_blocks: list[str] = [""] * len(source_blocks)
+        doc_index = len(documents)
+
+        if isinstance(translator, translate_markdown.OpenAITranslator):
+            for block_index, block in enumerate(source_blocks):
+                if translate_markdown.should_translate_with_model(block):
+                    model_entries.append((doc_index, block_index, block))
+                    continue
+                if translate_markdown.is_fenced_code_block(block):
+                    translated_blocks[block_index] = block
+                else:
+                    translated_blocks[block_index] = translate_markdown.translate_block_locally(
+                        block,
+                        glossary,
+                    )
+        else:
+            translated_blocks = translate_markdown.translate_markdown_blocks(source_text, translator)
+
+        documents.append(
+            {
+                "index": index,
+                "source_path": source_path,
+                "output_path": output_path,
+                "source_text": source_text,
+                "source_blocks": source_blocks,
+                "translated_blocks": translated_blocks,
+            }
+        )
+
+    if isinstance(translator, translate_markdown.OpenAITranslator) and model_entries:
+        batches = batched_model_entries(model_entries)
+        for batch_index, batch in enumerate(batches, start=1):
+            batch_blocks = [entry[2] for entry in batch]
+            doc_ids = sorted({entry[0] for entry in batch})
+            print(
+                "[pipeline] "
+                f"[translate batch {batch_index}/{len(batches)}] "
+                f"translating {len(batch_blocks)} block(s) across {len(doc_ids)} file(s)"
+            )
+            translated_batch = translator.translate_blocks(batch_blocks)
+            for (doc_index, block_index, _), translated_block in zip(
+                batch,
+                translated_batch,
+                strict=True,
+            ):
+                documents[doc_index]["translated_blocks"][block_index] = translated_block
+
+    translation_seconds = time.perf_counter() - translation_started
+    print(f"[pipeline] translation_seconds={translation_seconds:.2f}")
+
+    pdf_seconds = 0.0
+    for document in documents:
+        index = int(document["index"])
+        output_path = document["output_path"]
+        source_text = document["source_text"]
+        source_blocks = document["source_blocks"]
+        translated_blocks = document["translated_blocks"]
+
         translated_text = "\n\n".join(block.strip() for block in translated_blocks if block.strip())
         if not translated_text.endswith("\n"):
             translated_text += "\n"
@@ -253,18 +346,29 @@ def main() -> None:
         print(f"[pipeline] [translate {index}/{total}] wrote {output_path}")
         output_paths.append(output_path)
         if args.export_pdf:
+            pdf_started = time.perf_counter()
             pdf_path = translate_markdown.export_markdown_to_pdf(output_path, pdf_output_dir)
+            pdf_seconds += time.perf_counter() - pdf_started
             print(f"[pipeline] [translate {index}/{total}] wrote {pdf_path}")
 
     combined_sources = [
         path for path in output_paths if path.exists() and translate_markdown.is_problem_translation_markdown(path)
     ]
     if combined_sources:
+        combined_started = time.perf_counter()
         combined_markdown_path = translate_markdown.write_combined_markdown(combined_sources, chinese_dir)
         print(f"[pipeline] wrote combined markdown {combined_markdown_path}")
         if args.export_pdf:
+            pdf_started = time.perf_counter()
             combined_pdf_path = translate_markdown.export_markdown_to_pdf(combined_markdown_path, pdf_output_dir)
+            pdf_seconds += time.perf_counter() - pdf_started
             print(f"[pipeline] wrote combined pdf {combined_pdf_path}")
+        combined_seconds = time.perf_counter() - combined_started
+        print(f"[pipeline] combined_seconds={combined_seconds:.2f}")
+
+    if args.export_pdf:
+        print(f"[pipeline] pdf_seconds={pdf_seconds:.2f}")
+    print(f"[pipeline] total_seconds={time.perf_counter() - pipeline_started:.2f}")
 
 
 if __name__ == "__main__":

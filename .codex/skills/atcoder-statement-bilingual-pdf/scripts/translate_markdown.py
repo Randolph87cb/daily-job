@@ -617,24 +617,29 @@ def export_markdown_to_pdf(markdown_path: Path, pdf_output_dir: Path) -> Path:
         str(absolute_pdf_output_dir),
     ]
     print(f"[pdf] exporting {markdown_path.name} -> {pdf_output_dir}")
-    completed = subprocess.run(
-        command,
-        check=True,
-        capture_output=True,
-        text=True,
-        cwd=str(absolute_markdown_path.parent),
-    )
-    if completed.stdout.strip():
-        print(completed.stdout.strip())
-    if completed.stderr.strip():
-        print(completed.stderr.strip())
-    generated_pdf = absolute_pdf_output_dir / f"{markdown_path.stem}.pdf"
-    final_pdf = absolute_pdf_output_dir / pdf_name_for_markdown(markdown_path)
-    if generated_pdf.exists() and generated_pdf != final_pdf:
-        if final_pdf.exists():
-            final_pdf.unlink()
-        generated_pdf.replace(final_pdf)
-    return final_pdf if final_pdf.exists() else generated_pdf
+    temp_dir = absolute_pdf_output_dir / ".tmp"
+    try:
+        completed = subprocess.run(
+            command,
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=str(absolute_markdown_path.parent),
+        )
+        if completed.stdout.strip():
+            print(completed.stdout.strip())
+        if completed.stderr.strip():
+            print(completed.stderr.strip())
+        generated_pdf = absolute_pdf_output_dir / f"{markdown_path.stem}.pdf"
+        final_pdf = absolute_pdf_output_dir / pdf_name_for_markdown(markdown_path)
+        if generated_pdf.exists() and generated_pdf != final_pdf:
+            if final_pdf.exists():
+                final_pdf.unlink()
+            generated_pdf.replace(final_pdf)
+        return final_pdf if final_pdf.exists() else generated_pdf
+    finally:
+        if temp_dir.exists():
+            shutil.rmtree(temp_dir, ignore_errors=True)
 
 
 class RuleBasedTranslator:
@@ -661,6 +666,7 @@ class OpenAITranslator:
         self.api_key = api_key
         self.api_mode = api_mode
         self.base_url = base_url
+        self.session = requests.Session()
 
     def translate_block(self, block: str) -> str:
         return self.translate_blocks([block])[0]
@@ -748,7 +754,7 @@ class OpenAITranslator:
         for attempt in range(1, 4):
             try:
                 print(f"[translate] request attempt {attempt}/3 -> {self.base_url}")
-                response = requests.post(
+                response = self.session.post(
                     self.base_url,
                     headers={
                         "Authorization": f"Bearer {self.api_key}",
