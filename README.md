@@ -48,6 +48,21 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 - `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
 - 这个入口当前仍然复用仓库内现有脚本与依赖；如果后续要发给没有 Codex 的用户，优先围绕这个入口继续打包，而不是直接暴露 skill。
 
+如果要生成一份本地“点击即用”的便携发布目录，可执行：
+
+```powershell
+python .\scripts\build_click_release.py --clean
+```
+
+- 默认输出到 `.tmp/release/atcoder-delivery-click/`。
+- 生成物自带：
+  - Python 运行时；
+  - `node.exe`；
+  - 本地 `md2pdf` CLI；
+  - 题面抓取与题解导出所需脚本；
+  - `run.bat` / `run.ps1` 启动器。
+- 发布包默认改用 `browser-cookies` 鉴权，不再依赖 Codex 的 `browser-session-manager`。
+
 ## 文档维护约定
 
 - 目录结构或主要职责发生变化时，需要同步更新 `README.md` 与 `AGENTS.md`。
