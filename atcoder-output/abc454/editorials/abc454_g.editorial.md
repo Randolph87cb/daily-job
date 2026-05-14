@@ -145,6 +145,7 @@ struct Frame{
 
 int main(){
 
+    // 先按题目给的伪代码重建整棵树和所有颜色
     int n, M, F;
     ll seed;
     cin >> n >> seed >> M >> F;
@@ -156,6 +157,7 @@ int main(){
     ll state = seed;
     int edge_cnt = 0;
 
+    // 生成父节点数组，同时顺手建树
     for(int i=2; i<=n; i++){
         int p;
         if(i <= M){
@@ -171,6 +173,7 @@ int main(){
         head[p] = edge_cnt++;
     }
 
+    // 再生成每个点的颜色
     for(int i=1; i<=n; i++){
         if(i <= M){
             cin >> color[i];
@@ -180,7 +183,7 @@ int main(){
         }
     }
 
-    // Euler 序
+    // 用显式栈跑 DFS，求每个点的 Euler 序区间，避免递归爆栈
     vector<int> tin(n + 1), tout(n + 1), euler(n + 1), iter(n + 1);
     vector<int> stk;
     stk.reserve(n);
@@ -208,7 +211,7 @@ int main(){
         }
     }
 
-    // 子树大小与重儿子
+    // 按 Euler 序倒着推，求子树大小和重儿子
     vector<int> sz(n + 1, 0), heavy(n + 1, 0);
     for(int idx=n; idx>=1; idx--){
         int v = euler[idx];
@@ -227,9 +230,12 @@ int main(){
     vector<int> cnt(n + 1, 0), used_colors;
     used_colors.reserve(n);
 
+    // max_freq 是当前统计结构中的最大出现次数
+    // num_max 是达到这个最大次数的颜色种数
     int max_freq = 0;
     int num_max = 0;
 
+    // 把一种颜色加入当前统计结构，并同步维护众数信息
     auto add_color = [&](int col){
         if(cnt[col] == 0){
             used_colors.push_back(col);
@@ -244,12 +250,14 @@ int main(){
         }
     };
 
+    // 把 Euler 序上的一个连续区间整段加入统计结构
     auto add_range = [&](int l, int r){
         for(int i=l; i<=r; i++){
             add_color(color[euler[i]]);
         }
     };
 
+    // 当前这轮不保留时，只清理真正用到过的颜色
     auto clear_all = [&](){
         for(int col : used_colors){
             cnt[col] = 0;
@@ -264,6 +272,8 @@ int main(){
     dfs_stack.reserve(n);
     dfs_stack.push_back({1, head[1], 0, false});
 
+    // 用显式栈模拟 DSU on tree：
+    // 先做轻儿子，再做重儿子，最后把轻儿子重新加回
     while(!dfs_stack.empty()){
         Frame &cur = dfs_stack.back();
         int v = cur.v;
@@ -290,6 +300,7 @@ int main(){
             continue;
         }
 
+        // 轻儿子都算完并清空后，开始处理重儿子
         if(cur.state == 2){
             cur.state = 3;
             if(heavy[v] != 0){
@@ -300,6 +311,7 @@ int main(){
             continue;
         }
 
+        // 当前重儿子的统计结构已经保留着，再把所有轻儿子整段加回
         for(int e=head[v]; e!=-1; e=nxt[e]){
             int u = to[e];
             if(u == heavy[v]){
@@ -307,13 +319,17 @@ int main(){
             }
             add_range(tin[u], tout[u]);
         }
+
+        // 最后把当前点自己加入，这时统计结构恰好就是 v 的整棵子树
         add_color(color[v]);
 
+        // 此时 max_freq 和 num_max 就分别是 m_v、k_v
         answer = (answer + 1LL * (max_freq ^ v) % MOD * (num_max ^ v)) % MOD;
 
         bool keep = cur.keep;
         dfs_stack.pop_back();
         if(!keep){
+            // 轻子树计算结束后不保留，恢复为空结构
             clear_all();
         }
     }

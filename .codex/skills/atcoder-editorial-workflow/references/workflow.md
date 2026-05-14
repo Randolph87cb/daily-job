@@ -110,7 +110,8 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
    - 合并版 Markdown
    - 合并版 PDF
 4. 如果统一改过标题，例如 `## 参考实现`，单题和合并版里都要命中
-5. Git 状态里不要夹带 `.tmp/`、误生成目录或导出缓存
+5. 至少抽查 `1` 篇复杂题题解，确认核心代码不是零注释，且关键函数 / 关键循环前有说明性注释
+6. Git 状态里不要夹带 `.tmp/`、误生成目录或导出缓存
 
 ## 8. 记录与提交
 

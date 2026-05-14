@@ -107,11 +107,13 @@ struct Node{
 
 vector<Node> seg;
 
+// 由左右儿子回推当前区间的和与平方和
 void pull(int id){
     seg[id].sum = (seg[id << 1].sum + seg[id << 1 | 1].sum) % MOD;
     seg[id].sq = (seg[id << 1].sq + seg[id << 1 | 1].sq) % MOD;
 }
 
+// 建树时数组初值全为 0，只需要记住区间长度
 void build(int id, int l, int r){
     seg[id].sum = 0;
     seg[id].sq = 0;
@@ -126,6 +128,7 @@ void build(int id, int l, int r){
     build(id << 1 | 1, mid + 1, r);
 }
 
+// 整段加 v 时，同时更新区间和、区间平方和与懒标记
 void apply(int id, ll v){
     v %= MOD;
     ll old_sum = seg[id].sum;
@@ -136,6 +139,7 @@ void apply(int id, ll v){
     seg[id].lazy = (seg[id].lazy + v) % MOD;
 }
 
+// 下传懒标记，保证访问子区间前信息正确
 void push(int id){
     if(seg[id].lazy == 0){
         return;
@@ -146,6 +150,7 @@ void push(int id){
     seg[id].lazy = 0;
 }
 
+// 区间加：把 [ql, qr] 中所有元素都加上 v
 void update(int id, int l, int r, int ql, int qr, ll v){
     if(ql <= l && r <= qr){
         apply(id, v);
@@ -163,6 +168,7 @@ void update(int id, int l, int r, int ql, int qr, ll v){
     pull(id);
 }
 
+// 区间查询：取出 [ql, qr] 的元素和与平方和
 Node query(int id, int l, int r, int ql, int qr){
     if(ql <= l && r <= qr){
         return seg[id];
@@ -193,6 +199,7 @@ int main(){
     int n, q;
     cin >> n >> q;
 
+    // 线段树维护整个数组 A 的区间和与区间平方和
     seg.assign(4 * n + 5, {0, 0, 0, 0});
     build(1, 1, n);
 
@@ -201,9 +208,13 @@ int main(){
         ll a;
         cin >> l >> r >> a;
 
+        // 先执行题目要求的区间加
         update(1, 1, n, l, r, a);
+
+        // 再查询更新后的子数组 B = A[l..r]
         Node res = query(1, 1, n, l, r);
 
+        // 最小合并代价恒为 (sum^2 - sq) / 2
         ll ans = (res.sum * res.sum % MOD - res.sq + MOD) % MOD;
         ans = ans * INV2 % MOD;
         cout << ans << '\n';

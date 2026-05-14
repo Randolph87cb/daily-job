@@ -132,6 +132,7 @@ using ll = long long;
 
 int main(){
 
+    // 逐组处理，每组都独立计算最少操作次数
     int T;
     cin >> T;
 
@@ -140,19 +141,23 @@ int main(){
         ll M;
         cin >> n >> M;
 
+        // 原数组按 1 下标读入，方便和对称位置 N + 1 - i 对应
         vector<ll> a(n + 1);
         for(int i=1; i<=n; i++){
             cin >> a[i];
         }
 
+        // 只需要处理前一半的对称对
         int m = n / 2;
         vector<ll> d(m + 2, 0), diff;
         diff.reserve(m + 1);
 
+        // d[i] 表示第 i 对对称位置需要满足的模 M 差值
         for(int i=1; i<=m; i++){
             d[i] = (a[n + 1 - i] - a[i] + M) % M;
         }
 
+        // 把差值数组再做一层差分，问题会转成选择若干 r[i] 减去一个 M
         ll sum = 0;
         for(int i=1; i<=m + 1; i++){
             ll r = (d[i] - d[i - 1] + M) % M;
@@ -160,14 +165,17 @@ int main(){
             sum += r;
         }
 
+        // need 表示必须有多少个位置从 r[i] 改成 r[i] - M，才能让总和回到 0
         ll need = sum / M;
         sort(diff.begin(), diff.end(), greater<ll>());
 
+        // 为了让正数部分之和最小，优先把最大的 need 个 r[i] 切掉
         ll cut = 0;
         for(int i=0; i<need; i++){
             cut += diff[i];
         }
 
+        // 剩下的正数部分之和，就是最少操作次数
         cout << sum - cut << '\n';
     }
 

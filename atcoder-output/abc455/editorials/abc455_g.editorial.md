@@ -179,12 +179,16 @@ HashValue make_hash(ull seed){
     return {splitmix64(seed), splitmix64(seed ^ 0x9e3779b97f4a7c15ULL)};
 }
 
+// 第二部分会频繁用到这个表达式：
+// B * prefix[idx] - set_hash * idx
 HashValue get_key(const vector<HashValue> &prefix, int idx, int b, const HashValue &set_hash){
     return prefix[idx] * (ull)b - set_hash * (ull)idx;
 }
 
+// 第一类答案：每个出现过的值都恰好出现 b 次
 ll count_each_exactly_b(const vector<int> &a, int n, int b){
 
+    // 给每个值构造一个长度为 b 的哈希循环，整轮和为 0
     vector<array<HashValue, 10>> cycle(n + 1);
     for(int x=1; x<=n; x++){
         HashValue sum = {0, 0};
@@ -195,6 +199,7 @@ ll count_each_exactly_b(const vector<int> &a, int n, int b){
         cycle[x][b - 1] = {0ULL - sum.x, 0ULL - sum.y};
     }
 
+    // prefix[i] 记录前 i 个数在这套“模 b 循环哈希”下的前缀和
     vector<int> occ(n + 1, 0);
     vector<HashValue> prefix(n + 1, {0, 0});
     for(int i=1; i<=n; i++){
@@ -214,12 +219,14 @@ ll count_each_exactly_b(const vector<int> &a, int n, int b){
 
     ll ans = 0;
     for(int r=1; r<=n; r++){
+        // 双指针保证当前窗口内每个值出现次数都不超过 b
         cnt[a[r]]++;
         while(cnt[a[r]] > b){
             cnt[a[left]]--;
             left++;
         }
 
+        // 只保留合法左端点之前缀
         int need_left = left - 1;
         while(left_prefix < need_left){
             auto it = freq.find(prefix[left_prefix]);
@@ -240,6 +247,7 @@ ll count_each_exactly_b(const vector<int> &a, int n, int b){
     return ans;
 }
 
+// 第二类答案：恰好有 b 个不同整数出现，且这些值出现次数都相同
 ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> &value_hash, const vector<HashValue> &prefix){
 
     vector<int> cnt_b(n + 1, 0), cnt_b1(n + 1, 0);
@@ -258,6 +266,7 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
     ll ans = 0;
 
     for(int r=1; r<=n; r++){
+        // lb 维护“不同值个数至多为 b”的最小左端点
         if(cnt_b[a[r]] == 0){
             distinct_b++;
         }
@@ -270,6 +279,7 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
             lb++;
         }
 
+        // lb1 维护“不同值个数至多为 b - 1”的最小左端点
         if(cnt_b1[a[r]] == 0){
             distinct_b1++;
             window_hash = window_hash + value_hash[a[r]];
@@ -285,6 +295,7 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
             lb1++;
         }
 
+        // 满足“恰好 b 个不同值”的左端点范围是 [lb, lb1 - 1]
         int need_l = lb - 1;
         int need_r = lb1 - 2;
         if(need_l > need_r){
@@ -293,6 +304,7 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
             continue;
         }
 
+        // 这一整段左端点对应的不同整数集合相同，它们的值哈希和记为 set_hash
         HashValue set_hash = window_hash + value_hash[a[lb1 - 1]];
 
         if(!active || !(set_hash == current_set_hash)){
@@ -300,12 +312,14 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
             current_set_hash = set_hash;
             freq.clear();
 
+            // 集合变了，重建这一段前缀键值的频率表
             cur_l = need_l;
             cur_r = need_r;
             for(int i=cur_l; i<=cur_r; i++){
                 freq[get_key(prefix, i, b, current_set_hash)]++;
             }
         } else {
+            // 集合没变，只需把有效区间滑动到新的 [need_l, need_r]
             while(cur_l < need_l){
                 HashValue key = get_key(prefix, cur_l, b, current_set_hash);
                 auto it = freq.find(key);
@@ -321,6 +335,7 @@ ll count_distinct_b(const vector<int> &a, int n, int b, const vector<HashValue> 
             }
         }
 
+        // 匹配 B * S_p - H * p = B * S_r - H * r 的前缀个数
         HashValue target = get_key(prefix, r, b, current_set_hash);
         auto it = freq.find(target);
         if(it != freq.end()){
@@ -340,6 +355,7 @@ int main(){
         int n, k;
         cin >> n >> k;
 
+        // a 是原数组，b[i] 是每次要查询的 B_k
         vector<int> a(n + 1), b(k);
         for(int i=1; i<=n; i++){
             cin >> a[i];
@@ -348,6 +364,7 @@ int main(){
             cin >> b[i];
         }
 
+        // 为每个值准备独立随机哈希，再求普通值哈希前缀和
         vector<HashValue> value_hash(n + 1, {0, 0});
         for(int x=1; x<=n; x++){
             value_hash[x] = make_hash((ull)x * 1234567ULL + 890123ULL);
@@ -358,6 +375,7 @@ int main(){
             prefix[i] = prefix[i - 1] + value_hash[a[i]];
         }
 
+        // 每个 B_k 独立统计两类答案
         for(int i=0; i<k; i++){
             ll ans1 = count_each_exactly_b(a, n, b[i]);
             ll ans2 = count_distinct_b(a, n, b[i], value_hash, prefix);
