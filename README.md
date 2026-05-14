@@ -47,6 +47,9 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 - `statement` 阶段会调用现有题面抓取翻译 pipeline。
 - `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
 - 这个入口当前仍然复用仓库内现有脚本与依赖；如果后续要发给没有 Codex 的用户，优先围绕这个入口继续打包，而不是直接暴露 skill。
+- 统一入口支持命令行覆盖：
+  - `--with-pdf` / `--no-pdf`
+  - `--overwrite` / `--no-overwrite`
 
 如果要生成一份本地“点击即用”的便携发布目录，可执行：
 
@@ -62,6 +65,11 @@ python .\scripts\build_click_release.py --clean
   - 题面抓取与题解导出所需脚本；
   - `run.bat` / `run.ps1` 启动器。
 - 发布包默认改用 `browser-cookies` 鉴权，不再依赖 Codex 的 `browser-session-manager`。
+- 发布包当前默认偏向“快路径”：
+  - 题面 PDF 默认关闭；
+  - 已有输出默认复用；
+  - 需要完整 PDF 时可显式传 `--with-pdf`；
+  - 需要从头重跑时可显式传 `--overwrite`。
 
 ## 文档维护约定
 

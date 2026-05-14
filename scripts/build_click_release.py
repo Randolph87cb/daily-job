@@ -168,9 +168,9 @@ def release_config_text() -> str:
     "api_mode": "chat",
     "base_url": "",
     "timeout": 30,
-    "overwrite": true,
+    "overwrite": false,
     "output_format": "bilingual",
-    "export_pdf": true,
+    "export_pdf": false,
     "auth_mode": "browser-cookies",
     "browser_cookies": "auto",
     "session_root": "",
@@ -208,6 +208,13 @@ Quick start
 Notes
 - This portable package already contains the Python runtime, node.exe and a local md2pdf CLI.
 - The default auth mode is `browser-cookies`, so it no longer depends on Codex or browser-session-manager.
+- The default package config is optimized for speed and resumability:
+  - statement PDF export is disabled by default;
+  - existing outputs are reused by default.
+- If you want full statement PDFs for a run, use:
+  - `run.bat abc457 --with-pdf`
+- If you want to force a full rerun from scratch, use:
+  - `run.bat abc457 --overwrite`
 - If the browser cookies are expired, open AtCoder in your browser and log in again before rerunning.
 - Outputs are written to the `output/` directory.
 - The editable workflow config is `scripts/atcoder_delivery.release.json`.

@@ -75,6 +75,31 @@ def parse_args() -> argparse.Namespace:
         action="store_true",
         help="Print planned commands without executing them.",
     )
+    parser.set_defaults(export_pdf=None, overwrite=None)
+    parser.add_argument(
+        "--with-pdf",
+        dest="export_pdf",
+        action="store_true",
+        help="Force-enable statement PDF export for this run.",
+    )
+    parser.add_argument(
+        "--no-pdf",
+        dest="export_pdf",
+        action="store_false",
+        help="Force-disable statement PDF export for this run.",
+    )
+    parser.add_argument(
+        "--overwrite",
+        dest="overwrite",
+        action="store_true",
+        help="Force-overwrite existing statement outputs for this run.",
+    )
+    parser.add_argument(
+        "--no-overwrite",
+        dest="overwrite",
+        action="store_false",
+        help="Force-skip existing statement outputs for this run.",
+    )
     return parser.parse_args()
 
 
@@ -90,6 +115,17 @@ def statement_script_path() -> Path:
         / "atcoder-statement-bilingual-pdf"
         / "scripts"
         / "run_atcoder_pipeline.py"
+    )
+
+
+def translation_script_path() -> Path:
+    return (
+        repo_root()
+        / ".codex"
+        / "skills"
+        / "atcoder-statement-bilingual-pdf"
+        / "scripts"
+        / "translate_markdown.py"
     )
 
 
@@ -123,6 +159,15 @@ def deep_merge(base: dict[str, Any], override: dict[str, Any]) -> dict[str, Any]
         else:
             merged[key] = value
     return merged
+
+
+def apply_cli_overrides(args: argparse.Namespace, config: dict[str, Any]) -> dict[str, Any]:
+    updated = deep_merge(config, {})
+    if args.export_pdf is not None:
+        updated["statement"]["export_pdf"] = bool(args.export_pdf)
+    if args.overwrite is not None:
+        updated["statement"]["overwrite"] = bool(args.overwrite)
+    return updated
 
 
 def load_json(path: Path) -> dict[str, Any]:
@@ -214,6 +259,18 @@ def editorial_markdown_files(editorial_dir: Path) -> list[Path]:
     return sorted(editorial_dir.glob("*.editorial.md"))
 
 
+def statement_dirs(contest: str, config: dict[str, Any], base_dir: Path) -> tuple[Path, Path]:
+    workspace_dir = resolve_path(config["workspace_dir"], base_dir=base_dir)
+    contest_dir = workspace_dir / contest
+    return contest_dir / "en", contest_dir / "zh-CN"
+
+
+def english_markdown_files(english_dir: Path) -> list[Path]:
+    if not english_dir.is_dir():
+        return []
+    return sorted(english_dir.glob("*.en.md"))
+
+
 def validate_prerequisites(
     *,
     contest: str,
@@ -237,10 +294,28 @@ def validate_prerequisites(
         python_command = str(config["python_command"]).strip() or "python"
         if not command_exists(python_command):
             raise DeliveryConfigError(f"Python command not found in PATH: {python_command}")
-        if not command_exists("node"):
-            raise DeliveryConfigError("Node.js command not found in PATH: node")
-        if not statement_script_path().is_file():
-            raise DeliveryConfigError(f"Missing statement pipeline script: {statement_script_path()}")
+        english_dir, chinese_dir = statement_dirs(contest, config, base_dir)
+        summary["english_dir"] = english_dir
+        summary["chinese_dir"] = chinese_dir
+        reuse_english_cache = (
+            not bool(config["statement"]["overwrite"]) and len(english_markdown_files(english_dir)) > 0
+        )
+        summary["statement_resume_from_english"] = reuse_english_cache
+        if reuse_english_cache:
+            if not translation_script_path().is_file():
+                raise DeliveryConfigError(
+                    f"Missing translate script for cached-English resume: {translation_script_path()}"
+                )
+            summary["warnings"].append(
+                f"检测到已缓存英文题面，statement 阶段将直接复用：{english_dir}"
+            )
+        else:
+            if not command_exists("node"):
+                raise DeliveryConfigError("Node.js command not found in PATH: node")
+            if not statement_script_path().is_file():
+                raise DeliveryConfigError(
+                    f"Missing statement pipeline script: {statement_script_path()}"
+                )
         if config["statement"]["export_pdf"] and not command_exists("md2pdf"):
             raise DeliveryConfigError("md2pdf command not found in PATH.")
         if str(config["statement"]["provider"]).strip().lower() == "openai":
@@ -354,6 +429,47 @@ def build_statement_command(
     return command
 
 
+def build_translation_resume_command(
+    *,
+    contest: str,
+    config: dict[str, Any],
+    base_dir: Path,
+) -> list[str]:
+    statement = config["statement"]
+    english_dir, chinese_dir = statement_dirs(contest, config, base_dir)
+    env_file = resolve_path(config["env_file"], base_dir=base_dir)
+    command = [
+        str(config["python_command"]).strip() or "python",
+        str(translation_script_path()),
+        "--input-dir",
+        str(english_dir),
+        "--output-dir",
+        str(chinese_dir),
+        "--provider",
+        str(statement["provider"]),
+        "--model",
+        str(statement["model"]),
+        "--api-mode",
+        str(statement["api_mode"]),
+        "--env-file",
+        str(env_file),
+        "--output-format",
+        str(statement["output_format"]),
+    ]
+
+    base_url = str(statement["base_url"]).strip()
+    if base_url:
+        command.extend(["--base-url", base_url])
+
+    if statement["overwrite"]:
+        command.append("--overwrite")
+
+    if statement["export_pdf"]:
+        command.append("--export-pdf")
+
+    return command
+
+
 def build_editorial_command(
     *,
     editorial_dir: Path,
@@ -386,6 +502,7 @@ def main() -> None:
     base_dir = repo_root()
     user_config = load_json(config_path)
     config = deep_merge(DEFAULT_CONFIG, user_config)
+    config = apply_cli_overrides(args, config)
     contest = args.contest.strip().lower()
     if not contest:
         raise DeliveryConfigError("Contest ID cannot be empty.")
@@ -405,6 +522,10 @@ def main() -> None:
     log(f"workspace_dir={summary['workspace_dir']}")
     log(f"editorial_dir={summary['editorial_dir']}")
     log(f"env_file={summary['env_file']}")
+    log(f"statement.export_pdf={config['statement']['export_pdf']}")
+    log(f"statement.overwrite={config['statement']['overwrite']}")
+    if "statement_resume_from_english" in summary:
+        log(f"statement.resume_from_english={summary['statement_resume_from_english']}")
     for warning in summary["warnings"]:
         log(f"warning={warning}")
 
@@ -414,11 +535,18 @@ def main() -> None:
 
     if phase_needs_statement(args.phase, config):
         log("phase=statement")
-        statement_command = build_statement_command(
-            contest=contest,
-            config=config,
-            base_dir=base_dir,
-        )
+        if bool(summary.get("statement_resume_from_english")):
+            statement_command = build_translation_resume_command(
+                contest=contest,
+                config=config,
+                base_dir=base_dir,
+            )
+        else:
+            statement_command = build_statement_command(
+                contest=contest,
+                config=config,
+                base_dir=base_dir,
+            )
         run_command(statement_command, cwd=repo_root(), dry_run=args.dry_run)
 
     if phase_needs_editorials(args.phase, config):
