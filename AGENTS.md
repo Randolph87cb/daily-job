@@ -21,6 +21,8 @@
 ├─ AI工作记录/
 │  ├─ records/YYYY/MM/*.md
 │  └─ skill-backlog.md
+├─ scripts/
+│  └─ run_atcoder_delivery.py
 ├─ atcoder-arc218/
 │  ├─ scripts/
 │  ├─ samples/
@@ -56,6 +58,15 @@
   - 当前文件 `AGENTS.md`
   - `.codex/skills/atcoder-editorial-workflow/SKILL.md`
   - 如涉及统一题解规范，再同步全局 skill `algorithm-editorial-reference` 的对应说明
+
+## AtCoder 统一入口约定
+
+- 项目级 AtCoder 交付编排入口放在根目录 `scripts/`，当前统一入口为 `scripts/run_atcoder_delivery.py`。
+- 这个入口负责串起题面抓取翻译、题解导出和预检查；它是未来对外打包、服务器定时执行或改造成独立程序时的优先复用边界。
+- 如果修改了统一入口的参数、配置文件结构、阶段命名或默认产物目录，至少同步更新：
+  - `README.md`
+  - 当前文件 `AGENTS.md`
+  - 相关示例配置或发布说明
 
 ## 临时文件与忽略规则
 

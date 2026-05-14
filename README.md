@@ -15,6 +15,7 @@
 ├─ AI工作记录/
 │  ├─ records/YYYY/MM/*.md                     # 项目内 AI 工作摘要
 │  └─ skill-backlog.md                         # 可沉淀流程与 skill 候选
+├─ scripts/                                    # 项目级统一入口与对外打包基础脚本
 ├─ atcoder-arc218/                             # AtCoder 脚本实验目录与参考文档
 ├─ atcoder-output/                             # 比赛题面抓取、翻译、PDF 与题解输出
 ├─ 签到表/                                      # 月度签到表 Excel
@@ -27,9 +28,25 @@
 
 - `.codex/skills/` 保存项目内使用的本地 skill，实现和项目流程一起维护；当前已包含题面抓取翻译、题解撰写导出、签到表维护和课时统计等流程。其中题解 workflow 负责项目目录与导出流程，正文与代码规范复用全局 `algorithm-editorial-reference`。
 - `AI工作记录/` 保存当前项目的任务摘要、关键决策、验证结果和 skill 沉淀线索。
+- `scripts/` 保存项目级包装脚本；当前提供 `run_atcoder_delivery.py` 作为 AtCoder 题面抓取与题解导出的统一入口，也是后续打包成独立程序时优先复用的编排层。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
 - `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。
 - `签到表/` 与 `课时统计/` 保存实际业务 Excel 素材。
+
+## AtCoder 统一入口
+
+项目根目录现在提供一个项目级统一入口：
+
+```powershell
+python .\scripts\run_atcoder_delivery.py abc450 --phase precheck
+python .\scripts\run_atcoder_delivery.py abc450 --phase statement
+python .\scripts\run_atcoder_delivery.py abc450 --phase all
+```
+
+- 默认配置文件是 `scripts/atcoder_delivery.example.json`。
+- `statement` 阶段会调用现有题面抓取翻译 pipeline。
+- `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
+- 这个入口当前仍然复用仓库内现有脚本与依赖；如果后续要发给没有 Codex 的用户，优先围绕这个入口继续打包，而不是直接暴露 skill。
 
 ## 文档维护约定
 

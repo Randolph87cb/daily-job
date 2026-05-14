@@ -1,0 +1,31 @@
+{
+  "python_command": "python",
+  "powershell_command": "pwsh",
+  "workspace_dir": "atcoder-output",
+  "env_file": ".env",
+  "statement": {
+    "enabled": true,
+    "provider": "openai",
+    "model": "gpt-4",
+    "api_mode": "chat",
+    "base_url": "",
+    "timeout": 30,
+    "overwrite": true,
+    "output_format": "bilingual",
+    "export_pdf": true,
+    "auth_mode": "session",
+    "browser_cookies": "auto",
+    "session_root": "",
+    "session_site": "atcoder",
+    "session_env": "prod",
+    "session_account": "default",
+    "session_browser": "chrome",
+    "session_mode": "profile",
+    "login_check_selector": ""
+  },
+  "editorials": {
+    "enabled": true,
+    "dir_template": "atcoder-output/{contest}/editorials",
+    "require_markdown": false
+  }
+}
