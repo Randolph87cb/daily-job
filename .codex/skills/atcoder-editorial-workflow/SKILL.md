@@ -52,7 +52,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 
 - 脚本会自动识别 `*.editorial.md`。
 - 单题 PDF 输出为 `A.pdf`、`B.pdf` 这类命名。
-- 合并版输出为 `<contest>.editorials.md` 和 `<CONTEST>-editorials.pdf`。
+- 合并版输出统一使用中文文件名：`<contest>题解.md` 和 `<contest>题解.pdf`。
 - 当前导出目录包含中文标题时，优先使用 `pwsh` 或当前 PowerShell 7 会话执行，避免 `powershell.exe` 读取 UTF-8 脚本时把中文常量导成乱码。
 
 ## 资源

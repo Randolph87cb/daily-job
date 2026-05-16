@@ -70,7 +70,9 @@ npm install
 10. 生成英文题面到 `en/`。
 11. 翻译为逐段穿插对照 Markdown 到 `zh-CN/`。
 12. 导出每题一个 PDF，例如 `A.pdf`、`B.pdf`。
-13. 自动合并整场 Markdown，并导出整场 PDF，例如 `ABC456.pdf`。
+13. 自动合并整场 Markdown，并导出整场 PDF；整合版统一使用中文文件名，例如：
+  - `abc456题面中英文对照.md`
+  - `abc456题面中英文对照.pdf`
 14. 完成后检查：
   - `en/` 下是否生成全部英文题面
   - `zh-CN/` 下是否生成全部中英对照 Markdown
@@ -153,8 +155,8 @@ python "$skillRoot\scripts\run_atcoder_pipeline.py" <contest-id> `
   - `atcoder-output/<contest>/zh-CN/B.pdf`
   - 依此类推
 - 合并产物：
-  - `atcoder-output/<contest>/zh-CN/<contest>.zh-CN.md`
-  - `atcoder-output/<contest>/zh-CN/<CONTEST>.pdf`
+  - `atcoder-output/<contest>/zh-CN/<contest>题面中英文对照.md`
+  - `atcoder-output/<contest>/zh-CN/<contest>题面中英文对照.pdf`
 
 ## 检查点
 

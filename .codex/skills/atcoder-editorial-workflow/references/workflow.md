@@ -19,8 +19,8 @@ atcoder-output/<contest>/editorials/
 ├─ A.pdf
 ├─ B.pdf
 ├─ ...
-├─ <contest>.editorials.md
-└─ <CONTEST>-editorials.pdf
+├─ <contest>题解.md
+└─ <contest>题解.pdf
 ```
 
 ## 2. 先改规则，再改题解
@@ -108,14 +108,14 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
   - `B.pdf`
   - ...
 - 生成合并版 Markdown：
-  - `<contest>.editorials.md`
+  - `<contest>题解.md`
 - 生成合并版 PDF：
-  - `<CONTEST>-editorials.pdf`
+  - `<contest>题解.pdf`
 
 ## 6. 合并版规则
 
 - 合并版 Markdown 顶部写：
-  - `# <CONTEST> 题解合集`
+  - `# <contest> 题解`
 - 各题之间插入：
 
 ```html

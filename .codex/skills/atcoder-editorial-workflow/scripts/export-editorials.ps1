@@ -42,6 +42,42 @@ function Get-ContestId {
     return [string]($uniqueIds | Select-Object -First 1)
 }
 
+function Get-CombinedMarkdownName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ContestId
+    )
+
+    return ($ContestId + '题解.md')
+}
+
+function Get-CombinedPdfName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ContestId
+    )
+
+    return ($ContestId + '题解.pdf')
+}
+
+function Get-LegacyCombinedMarkdownName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ContestId
+    )
+
+    return ($ContestId + '.editorials.md')
+}
+
+function Get-LegacyCombinedPdfName {
+    param(
+        [Parameter(Mandatory = $true)]
+        [string]$ContestId
+    )
+
+    return (([string]$ContestId).ToUpperInvariant() + '-editorials.pdf')
+}
+
 $resolvedEditorialDir = (Resolve-Path $EditorialDir).Path
 $md2pdf = Get-Command md2pdf.cmd -ErrorAction SilentlyContinue
 if(-not $md2pdf){
@@ -60,13 +96,14 @@ if(-not $files){
 }
 
 $contestId = Get-ContestId -Files $files
-$contestUpper = ([string]$contestId).ToUpperInvariant()
-$combinedMarkdownName = "$contestId.editorials.md"
-$combinedPdfName = "$contestUpper-editorials.pdf"
+$combinedMarkdownName = Get-CombinedMarkdownName -ContestId $contestId
+$combinedPdfName = Get-CombinedPdfName -ContestId $contestId
 $combinedMarkdownPath = Join-Path $resolvedEditorialDir $combinedMarkdownName
+$legacyCombinedMarkdownPath = Join-Path $resolvedEditorialDir (Get-LegacyCombinedMarkdownName -ContestId $contestId)
+$legacyCombinedPdfPath = Join-Path $resolvedEditorialDir (Get-LegacyCombinedPdfName -ContestId $contestId)
 
 $parts = @()
-$parts += "# $contestUpper 题解合集"
+$parts += "# $contestId 题解"
 foreach($file in $files){
     $text = (Get-Content -Path $file.FullName -Raw -Encoding UTF8).Trim()
     if([string]::IsNullOrWhiteSpace($text)){
@@ -79,6 +116,9 @@ foreach($file in $files){
 }
 
 $combinedText = ($parts -join "`r`n`r`n") + "`r`n"
+if((Test-Path $legacyCombinedMarkdownPath) -and ($legacyCombinedMarkdownPath -ne $combinedMarkdownPath)){
+    Remove-Item -Path $legacyCombinedMarkdownPath -Force
+}
 Set-Content -Path $combinedMarkdownPath -Value $combinedText -Encoding UTF8
 
 Push-Location $resolvedEditorialDir
@@ -103,12 +143,17 @@ try {
         throw "md2pdf failed for $combinedMarkdownName"
     }
 
-    $generatedCombinedPdf = Join-Path $resolvedEditorialDir ($contestId + '.editorials.pdf')
+    $generatedCombinedPdf = Join-Path $resolvedEditorialDir (([System.IO.Path]::GetFileNameWithoutExtension($combinedMarkdownName)) + '.pdf')
     $finalCombinedPdf = Join-Path $resolvedEditorialDir $combinedPdfName
-    if(Test-Path $finalCombinedPdf){
+    if(($generatedCombinedPdf -ne $finalCombinedPdf) -and (Test-Path $finalCombinedPdf)){
         Remove-Item -Path $finalCombinedPdf -Force
     }
-    Move-Item -Path $generatedCombinedPdf -Destination $finalCombinedPdf -Force
+    if($generatedCombinedPdf -ne $finalCombinedPdf){
+        Move-Item -Path $generatedCombinedPdf -Destination $finalCombinedPdf -Force
+    }
+    if((Test-Path $legacyCombinedPdfPath) -and ($legacyCombinedPdfPath -ne $finalCombinedPdf)){
+        Remove-Item -Path $legacyCombinedPdfPath -Force
+    }
     Write-Output ("MD " + $combinedMarkdownPath)
     Write-Output ("PDF " + $finalCombinedPdf)
 }

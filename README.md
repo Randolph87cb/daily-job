@@ -30,7 +30,7 @@
 - `AI工作记录/` 保存当前项目的任务摘要、关键决策、验证结果和 skill 沉淀线索。
 - `scripts/` 保存项目级包装脚本；当前提供 `run_atcoder_delivery.py` 作为 AtCoder 题面抓取与题解导出的统一入口，也是后续打包成独立程序时优先复用的编排层。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
-- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。
+- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。整合版产物统一使用中文文件名，例如 `abc458题面中英文对照.md`、`abc458题面中英文对照.pdf`、`abc458题解.md`、`abc458题解.pdf`。
 - `签到表/` 与 `课时统计/` 保存实际业务 Excel 素材。
 
 ## AtCoder 统一入口

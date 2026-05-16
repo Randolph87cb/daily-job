@@ -624,6 +624,8 @@ def export_markdown_to_pdf(markdown_path: Path, pdf_output_dir: Path) -> Path:
             check=True,
             capture_output=True,
             text=True,
+            encoding="utf-8",
+            errors="replace",
             cwd=str(absolute_markdown_path.parent),
         )
         if completed.stdout.strip():
@@ -636,6 +638,11 @@ def export_markdown_to_pdf(markdown_path: Path, pdf_output_dir: Path) -> Path:
             if final_pdf.exists():
                 final_pdf.unlink()
             generated_pdf.replace(final_pdf)
+        contest_id = infer_contest_id_from_statement_combined_stem(markdown_path.stem)
+        if contest_id:
+            legacy_pdf = absolute_pdf_output_dir / legacy_statement_combined_pdf_name(contest_id)
+            if legacy_pdf.exists() and legacy_pdf != final_pdf:
+                legacy_pdf.unlink()
         return final_pdf if final_pdf.exists() else generated_pdf
     finally:
         if temp_dir.exists():
@@ -1017,14 +1024,38 @@ def translated_name(path: Path) -> str:
     return path.stem + ".zh-CN.md"
 
 
+def statement_combined_markdown_name(contest_id: str) -> str:
+    return f"{contest_id}题面中英文对照.md"
+
+
+def legacy_statement_combined_markdown_name(contest_id: str) -> str:
+    return f"{contest_id}.zh-CN.md"
+
+
+def statement_combined_pdf_name(contest_id: str) -> str:
+    return f"{contest_id}题面中英文对照.pdf"
+
+
+def legacy_statement_combined_pdf_name(contest_id: str) -> str:
+    return f"{contest_id.upper()}.pdf"
+
+
+def infer_contest_id_from_statement_combined_stem(stem: str) -> str:
+    for pattern in [r"^([a-z0-9]+)题面中英文对照$", r"^([a-z0-9]+)\.zh-CN$"]:
+        match = re.match(pattern, stem, flags=re.IGNORECASE)
+        if match:
+            return match.group(1)
+    return ""
+
+
 def pdf_name_for_markdown(markdown_path: Path) -> str:
     stem = markdown_path.stem
     match = re.match(r"^[a-z0-9]+_([a-z0-9]+)\.zh-CN$", stem, flags=re.IGNORECASE)
     if match:
         return f"{match.group(1).upper()}.pdf"
-    merged_match = re.match(r"^([a-z0-9]+)\.zh-CN$", stem, flags=re.IGNORECASE)
-    if merged_match:
-        return f"{merged_match.group(1).upper()}.pdf"
+    contest_id = infer_contest_id_from_statement_combined_stem(stem)
+    if contest_id:
+        return statement_combined_pdf_name(contest_id)
     return f"{stem}.pdf"
 
 
@@ -1051,8 +1082,8 @@ def infer_contest_id_from_markdown_paths(markdown_paths: list[Path]) -> str:
 def combined_markdown_name(markdown_paths: list[Path]) -> str:
     contest_id = infer_contest_id_from_markdown_paths(markdown_paths)
     if contest_id:
-        return f"{contest_id}.zh-CN.md"
-    return "combined.zh-CN.md"
+        return statement_combined_markdown_name(contest_id)
+    return "题面中英文对照.md"
 
 
 def build_combined_markdown(markdown_paths: list[Path]) -> str:
@@ -1067,7 +1098,7 @@ def build_combined_markdown(markdown_paths: list[Path]) -> str:
         if not text:
             continue
         if index == 0 and contest_id:
-            parts.append(f"# {contest_id.upper()}\n\n{text}")
+            parts.append(f"# {contest_id} 题面中英文对照\n\n{text}")
             continue
         if parts:
             parts.append('<div style="page-break-after: always;"></div>')
@@ -1079,8 +1110,13 @@ def build_combined_markdown(markdown_paths: list[Path]) -> str:
 def write_combined_markdown(markdown_paths: list[Path], output_dir: Path) -> Path:
     combined_text = build_combined_markdown(markdown_paths)
     output_dir.mkdir(parents=True, exist_ok=True)
+    contest_id = infer_contest_id_from_markdown_paths(markdown_paths)
     output_path = output_dir / combined_markdown_name(markdown_paths)
     output_path.write_text(combined_text, encoding="utf-8")
+    if contest_id:
+        legacy_output_path = output_dir / legacy_statement_combined_markdown_name(contest_id)
+        if legacy_output_path.exists() and legacy_output_path != output_path:
+            legacy_output_path.unlink()
     return output_path
 
 

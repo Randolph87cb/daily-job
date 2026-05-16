@@ -51,12 +51,16 @@
 
 - `atcoder-output/<contest>/editorials/` 目录当前除了单题题解 Markdown 外，还可以包含：
   - 单题 PDF，例如 `A.pdf`
-  - 合并版 Markdown，例如 `<contest>.editorials.md`
-  - 合并版 PDF，例如 `<CONTEST>-editorials.pdf`
+  - 合并版 Markdown，例如 `<contest>题解.md`
+  - 合并版 PDF，例如 `<contest>题解.pdf`
+- `atcoder-output/<contest>/zh-CN/` 目录下的整合版双语题面也统一使用中文文件名：
+  - 合并版 Markdown，例如 `<contest>题面中英文对照.md`
+  - 合并版 PDF，例如 `<contest>题面中英文对照.pdf`
 - 如果题解目录中的产物命名或导出方式发生变化，至少同步更新：
   - `README.md`
   - 当前文件 `AGENTS.md`
   - `.codex/skills/atcoder-editorial-workflow/SKILL.md`
+  - `.codex/skills/atcoder-statement-bilingual-pdf/SKILL.md`
   - 如涉及统一题解规范，再同步全局 skill `algorithm-editorial-reference` 的对应说明
 
 ## AtCoder 统一入口约定
