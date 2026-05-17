@@ -399,15 +399,21 @@ def validate_prerequisites(
             )
         english_dir, _ = statement_dirs(contest, config, base_dir)
         summary["editorial_generation_statement_dir"] = english_dir
-        if not english_dir.is_dir():
-            raise DeliveryConfigError(
-                "Editorial generation requires English statements, but directory is missing: "
-                f"{english_dir}"
-            )
-        if not english_markdown_files(english_dir):
-            raise DeliveryConfigError(
-                f"Editorial generation found no English statement markdown in: {english_dir}"
-            )
+        if statement_enabled:
+            if not english_dir.is_dir():
+                summary["warnings"].append(
+                    "当前未发现英文题面目录；将由前面的 statement 阶段先生成后再进入自动题解阶段。"
+                )
+        else:
+            if not english_dir.is_dir():
+                raise DeliveryConfigError(
+                    "Editorial generation requires English statements, but directory is missing: "
+                    f"{english_dir}"
+                )
+            if not english_markdown_files(english_dir):
+                raise DeliveryConfigError(
+                    f"Editorial generation found no English statement markdown in: {english_dir}"
+                )
         dotenv_values = load_dotenv_values(env_file)
         if "OPENAI_API_KEY" not in os.environ and "OPENAI_API_KEY" not in dotenv_values:
             raise DeliveryConfigError(
