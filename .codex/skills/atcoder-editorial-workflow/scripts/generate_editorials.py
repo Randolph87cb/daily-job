@@ -18,6 +18,7 @@ DEFAULT_MAX_ATTEMPTS = 3
 DEFAULT_COMPILE_TIMEOUT = 30
 DEFAULT_RUN_TIMEOUT = 5
 DEFAULT_MODEL = "gpt-4"
+ALLOWED_REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh"}
 DEFAULT_CPP_STANDARD = "gnu++14"
 SAMPLE_INPUT_PATTERN = re.compile(r"^### Sample Input(?: (\d+))?$")
 SAMPLE_OUTPUT_PATTERN = re.compile(r"^### Sample Output(?: (\d+))?$")
@@ -123,6 +124,11 @@ def parse_args() -> argparse.Namespace:
         help="Override model name. Default uses OPENAI_MODEL or gpt-4",
     )
     parser.add_argument(
+        "--reasoning-effort",
+        default="",
+        help="Override reasoning effort. Default uses OPENAI_REASONING_EFFORT or model default.",
+    )
+    parser.add_argument(
         "--max-attempts",
         type=int,
         default=DEFAULT_MAX_ATTEMPTS,
@@ -209,6 +215,27 @@ def resolve_model(args: argparse.Namespace) -> str:
     if env_model:
         return env_model
     return DEFAULT_MODEL
+
+
+def normalize_reasoning_effort(value: str, *, source: str) -> str:
+    normalized = value.strip().lower()
+    if not normalized:
+        return ""
+    if normalized not in ALLOWED_REASONING_EFFORTS:
+        allowed = ", ".join(sorted(ALLOWED_REASONING_EFFORTS))
+        raise EditorialGenerationError(
+            f"Unsupported reasoning effort from {source}: {value!r}. Expected one of: {allowed}"
+        )
+    return normalized
+
+
+def resolve_reasoning_effort(args: argparse.Namespace) -> str:
+    if args.reasoning_effort.strip():
+        return normalize_reasoning_effort(args.reasoning_effort, source="--reasoning-effort")
+    env_effort = os.environ.get("OPENAI_REASONING_EFFORT", "").strip()
+    if env_effort:
+        return normalize_reasoning_effort(env_effort, source="OPENAI_REASONING_EFFORT")
+    return ""
 
 
 def normalized_problem_ids(problem_args: list[str]) -> list[str]:
@@ -421,8 +448,13 @@ def build_system_prompt() -> str:
     )
 
 
-def build_chat_payload(model: str, system_prompt: str, user_prompt: str) -> dict:
-    return {
+def build_chat_payload(
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    reasoning_effort: str,
+) -> dict:
+    payload = {
         "model": model,
         "messages": [
             {"role": "system", "content": system_prompt},
@@ -430,10 +462,18 @@ def build_chat_payload(model: str, system_prompt: str, user_prompt: str) -> dict
         ],
         "stream": False,
     }
+    if reasoning_effort:
+        payload["reasoning_effort"] = reasoning_effort
+    return payload
 
 
-def build_responses_payload(model: str, system_prompt: str, user_prompt: str) -> dict:
-    return {
+def build_responses_payload(
+    model: str,
+    system_prompt: str,
+    user_prompt: str,
+    reasoning_effort: str,
+) -> dict:
+    payload = {
         "model": model,
         "input": [
             {
@@ -446,6 +486,9 @@ def build_responses_payload(model: str, system_prompt: str, user_prompt: str) ->
             },
         ],
     }
+    if reasoning_effort:
+        payload["reasoning"] = {"effort": reasoning_effort}
+    return payload
 
 
 def extract_response_text(payload: dict, api_mode: str) -> str:
@@ -493,13 +536,14 @@ def request_editorial(
     api_mode: str,
     base_url: str,
     model: str,
+    reasoning_effort: str,
     user_prompt: str,
     timeout: int,
 ) -> str:
     payload = (
-        build_chat_payload(model, build_system_prompt(), user_prompt)
+        build_chat_payload(model, build_system_prompt(), user_prompt, reasoning_effort)
         if api_mode == "chat"
-        else build_responses_payload(model, build_system_prompt(), user_prompt)
+        else build_responses_payload(model, build_system_prompt(), user_prompt, reasoning_effort)
     )
     response = requests.post(
         base_url,
@@ -694,6 +738,7 @@ def generate_for_problem(
     api_mode: str,
     base_url: str,
     model: str,
+    reasoning_effort: str,
     args: argparse.Namespace,
 ) -> bool:
     statement_text = statement_path.read_text(encoding="utf-8")
@@ -731,6 +776,7 @@ def generate_for_problem(
             api_mode=api_mode,
             base_url=base_url,
             model=model,
+            reasoning_effort=reasoning_effort,
             user_prompt=prompt,
             timeout=180,
         )
@@ -779,6 +825,7 @@ def main() -> None:
     api_mode = resolve_api_mode(args)
     base_url = resolve_base_url(args, api_mode)
     model = resolve_model(args)
+    reasoning_effort = resolve_reasoning_effort(args)
     api_key = os.environ.get(args.api_key_env, "").strip()
     if not api_key:
         raise EditorialGenerationError(
@@ -795,6 +842,10 @@ def main() -> None:
     print(f"[editorial-gen] api_mode={api_mode}")
     print(f"[editorial-gen] base_url={base_url}")
     print(f"[editorial-gen] model={model}")
+    print(
+        "[editorial-gen] reasoning_effort="
+        + (reasoning_effort if reasoning_effort else "<provider-default>")
+    )
     print(f"[editorial-gen] statement_count={len(statement_paths)}")
     print(f"[editorial-gen] editorial_dir={editorial_dir}")
 
@@ -808,6 +859,7 @@ def main() -> None:
             api_mode=api_mode,
             base_url=base_url,
             model=model,
+            reasoning_effort=reasoning_effort,
             args=args,
         )
         if not success:

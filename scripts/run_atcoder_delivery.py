@@ -19,6 +19,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "enabled": True,
         "provider": "openai",
         "model": "",
+        "reasoning_effort": "",
         "api_mode": "chat",
         "base_url": "",
         "timeout": 30,
@@ -44,6 +45,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "enabled": True,
         "problem_ids": [],
         "model": "",
+        "reasoning_effort": "",
         "api_mode": "chat",
         "base_url": "",
         "max_attempts": 3,
@@ -460,6 +462,9 @@ def build_statement_command(
     model_override = normalized_model_override(statement.get("model"))
     if model_override:
         command.extend(["--model", model_override])
+    reasoning_effort_override = normalized_model_override(statement.get("reasoning_effort"))
+    if reasoning_effort_override:
+        command.extend(["--reasoning-effort", reasoning_effort_override])
 
     base_url = str(statement["base_url"]).strip()
     if base_url:
@@ -529,6 +534,9 @@ def build_translation_resume_command(
     model_override = normalized_model_override(statement.get("model"))
     if model_override:
         command.extend(["--model", model_override])
+    reasoning_effort_override = normalized_model_override(statement.get("reasoning_effort"))
+    if reasoning_effort_override:
+        command.extend(["--reasoning-effort", reasoning_effort_override])
 
     base_url = str(statement["base_url"]).strip()
     if base_url:
@@ -596,6 +604,11 @@ def build_editorial_generation_command(
     model_override = normalized_model_override(editorial_generation.get("model"))
     if model_override:
         command.extend(["--model", model_override])
+    reasoning_effort_override = normalized_model_override(
+        editorial_generation.get("reasoning_effort")
+    )
+    if reasoning_effort_override:
+        command.extend(["--reasoning-effort", reasoning_effort_override])
 
     base_url = str(editorial_generation["base_url"]).strip()
     if base_url:

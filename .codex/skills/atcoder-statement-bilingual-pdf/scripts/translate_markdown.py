@@ -21,6 +21,7 @@ URL_PATTERN = re.compile(r"https?://[^\s)]+")
 INLINE_CODE_WRAPPED_MATH_PATTERN = re.compile(r"`(\$[^`\n$][^`\n]*?\$)`")
 FENCED_BLOCK_PATTERN = re.compile(r"```[^\n]*\n([\s\S]*?)\n```")
 DEFAULT_OPENAI_MODEL = "gpt-4"
+ALLOWED_REASONING_EFFORTS = {"none", "minimal", "low", "medium", "high", "xhigh"}
 
 
 class TranslationError(RuntimeError):
@@ -88,6 +89,11 @@ def parse_args() -> argparse.Namespace:
         "--model",
         default="",
         help="Model used by the openai provider. Default uses OPENAI_MODEL or gpt-4.",
+    )
+    parser.add_argument(
+        "--reasoning-effort",
+        default="",
+        help="Reasoning effort used by the openai provider. Default uses OPENAI_REASONING_EFFORT or model default.",
     )
     parser.add_argument(
         "--api-mode",
@@ -200,6 +206,27 @@ def resolve_openai_model(args: argparse.Namespace) -> str:
     if env_model:
         return env_model
     return DEFAULT_OPENAI_MODEL
+
+
+def normalize_reasoning_effort(value: str, *, source: str) -> str:
+    normalized = value.strip().lower()
+    if not normalized:
+        return ""
+    if normalized not in ALLOWED_REASONING_EFFORTS:
+        allowed = ", ".join(sorted(ALLOWED_REASONING_EFFORTS))
+        raise TranslationError(
+            f"Unsupported reasoning effort from {source}: {value!r}. Expected one of: {allowed}"
+        )
+    return normalized
+
+
+def resolve_openai_reasoning_effort(args: argparse.Namespace) -> str:
+    if args.reasoning_effort.strip():
+        return normalize_reasoning_effort(args.reasoning_effort, source="--reasoning-effort")
+    env_effort = os.environ.get("OPENAI_REASONING_EFFORT", "").strip()
+    if env_effort:
+        return normalize_reasoning_effort(env_effort, source="OPENAI_REASONING_EFFORT")
+    return ""
 
 
 def apply_phrase_map(text: str, phrase_map: dict[str, str]) -> str:
@@ -674,12 +701,14 @@ class OpenAITranslator:
         self,
         glossary: Glossary,
         model: str,
+        reasoning_effort: str,
         api_key: str,
         api_mode: str,
         base_url: str,
     ) -> None:
         self.glossary = glossary
         self.model = model
+        self.reasoning_effort = reasoning_effort
         self.api_key = api_key
         self.api_mode = api_mode
         self.base_url = base_url
@@ -742,7 +771,7 @@ class OpenAITranslator:
 
     def _build_payload(self, system_prompt: str, user_prompt: str) -> dict:
         if self.api_mode == "chat":
-            return {
+            payload = {
                 "model": self.model,
                 "messages": [
                     {"role": "system", "content": system_prompt},
@@ -750,8 +779,11 @@ class OpenAITranslator:
                 ],
                 "stream": False,
             }
+            if self.reasoning_effort:
+                payload["reasoning_effort"] = self.reasoning_effort
+            return payload
 
-        return {
+        payload = {
             "model": self.model,
             "input": [
                 {
@@ -764,6 +796,9 @@ class OpenAITranslator:
                 },
             ],
         }
+        if self.reasoning_effort:
+            payload["reasoning"] = {"effort": self.reasoning_effort}
+        return payload
 
     def _post_with_retry(self, payload: dict) -> requests.Response:
         last_error: Exception | None = None
@@ -962,6 +997,7 @@ def create_translator(args: argparse.Namespace, glossary: Glossary) -> Translato
 
     api_mode = resolve_openai_api_mode(args)
     model = resolve_openai_model(args)
+    reasoning_effort = resolve_openai_reasoning_effort(args)
     api_key = os.environ.get(args.api_key_env, "").strip()
     if not api_key:
         raise TranslationError(
@@ -971,6 +1007,7 @@ def create_translator(args: argparse.Namespace, glossary: Glossary) -> Translato
     return OpenAITranslator(
         glossary=glossary,
         model=model,
+        reasoning_effort=reasoning_effort,
         api_key=api_key,
         api_mode=api_mode,
         base_url=base_url,
@@ -1153,9 +1190,14 @@ def main() -> None:
         api_mode = resolve_openai_api_mode(args)
         base_url = resolve_openai_base_url(args, api_mode)
         model = resolve_openai_model(args)
+        reasoning_effort = resolve_openai_reasoning_effort(args)
         print(f"[translate] api_mode={api_mode}")
         print(f"[translate] base_url={base_url}")
         print(f"[translate] model={model}")
+        print(
+            "[translate] reasoning_effort="
+            + (reasoning_effort if reasoning_effort else "<provider-default>")
+        )
     pdf_output_dir = args.pdf_output_dir or args.output_dir
     if args.export_pdf:
         print(f"[translate] pdf_output_dir={pdf_output_dir}")

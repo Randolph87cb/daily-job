@@ -46,6 +46,7 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 
 - 默认配置文件是 `scripts/atcoder_delivery.example.json`，当前默认开启完整流程：题面抓取翻译、自动题解生成、题解导出都会参与 `--phase all`。
 - 模型选择现在统一优先读取 `.env` 里的 `OPENAI_MODEL`；题面翻译脚本、题面 pipeline、自动题解脚本和项目级统一入口都使用同一个变量。只有在配置文件或命令行显式传了 `model` / `--model` 时，才会覆盖它。
+- 思考强度现在统一优先读取 `.env` 里的 `OPENAI_REASONING_EFFORT`；只有在配置文件或命令行显式传了 `reasoning_effort` / `--reasoning-effort` 时，才会覆盖它。不填写时，脚本不会主动发送该字段，而是交给服务端使用模型默认值。
 - `statement` 阶段会调用现有题面抓取翻译 pipeline。
 - `editorial-generate` 阶段会调用自动题解脚本：按单题逐次请求模型 API，抽取 `cpp` 代码，编译运行样例；失败时把样例检测结果回灌给下一次请求，直到通过或达到重试上限。
 - `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
@@ -56,6 +57,7 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 - 自动题解生成当前默认已启用；如需关闭或改参数，可在配置文件里调整 `editorial_generation`。常用配置包括：
   - `problem_ids`
   - `model`
+  - `reasoning_effort`
   - `api_mode`
   - `base_url`
   - `max_attempts`
@@ -69,7 +71,21 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 OPENAI_MODEL=gpt-5.4
 ```
 
-- `scripts/atcoder_delivery.example.json` 里的 `statement.model` 和 `editorial_generation.model` 默认留空；留空时表示继承 `OPENAI_MODEL`，只有需要单独覆盖某个阶段时才填写具体模型名。
+- 如果希望所有阶段统一切思考强度，可在 `.env` 中设置：
+
+```dotenv
+OPENAI_REASONING_EFFORT=medium
+```
+
+- 允许值：
+  - `none`
+  - `minimal`
+  - `low`
+  - `medium`
+  - `high`
+  - `xhigh`
+
+- `scripts/atcoder_delivery.example.json` 里的 `statement.model`、`statement.reasoning_effort`、`editorial_generation.model`、`editorial_generation.reasoning_effort` 默认留空；留空时表示继承 `.env`，只有需要单独覆盖某个阶段时才填写具体值。
 
 如果要生成一份本地“点击即用”的便携发布目录，可执行：
 
@@ -95,6 +111,7 @@ python .\scripts\build_click_release.py --clean
   - Windows + PowerShell
   - 有效的 `.env` / `OPENAI_API_KEY`
   - 如需统一指定模型，则在 `.env` 中设置 `OPENAI_MODEL`
+  - 如需统一指定思考强度，则在 `.env` 中设置 `OPENAI_REASONING_EFFORT`
   - 可访问 `atcoder.jp` 与模型 API 的网络
   - 本机可读取的浏览器 cookies，以及已登录的 AtCoder 账户
 

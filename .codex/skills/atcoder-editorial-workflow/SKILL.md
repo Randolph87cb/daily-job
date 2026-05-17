@@ -64,6 +64,7 @@ python ".\.codex\skills\atcoder-editorial-workflow\scripts\generate_editorials.p
   - `OPENAI_API_MODE`
   - `OPENAI_BASE_URL`
 - 模型名默认优先读取 `.env` 中的 `OPENAI_MODEL`；只有显式传 `--model` 时才覆盖
+- 思考强度默认优先读取 `.env` 中的 `OPENAI_REASONING_EFFORT`；只有显式传 `--reasoning-effort` 时才覆盖；不传时沿用服务端默认值
 - 默认每题最多重试 `3` 次。
 - 每次失败后，会把编译错误或样例对比结果写到：
   - `atcoder-output/<contest>/editorials/.validation/<contest>_<problem>.sample-check.md`

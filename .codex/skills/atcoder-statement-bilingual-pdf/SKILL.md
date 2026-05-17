@@ -42,6 +42,7 @@ npm install
   - `OPENAI_API_MODE=chat`
   - `OPENAI_BASE_URL=...`
   - 如需统一指定模型，额外设置 `OPENAI_MODEL=...`
+  - 如需统一指定思考强度，额外设置 `OPENAI_REASONING_EFFORT=...`
 - 本机已可调用：
   - `python`
   - `node`
@@ -122,7 +123,7 @@ python "$skillRoot\scripts\run_atcoder_pipeline.py" abc456
 - `--output-format bilingual`
 - `--export-pdf`
 
-默认情况下，`run_atcoder_pipeline.py` 和底层 `translate_markdown.py` 会优先读取 `.env` 里的 `OPENAI_MODEL` 作为模型名；只有你显式传了 `--model` 时才会覆盖该值。
+默认情况下，`run_atcoder_pipeline.py` 和底层 `translate_markdown.py` 会优先读取 `.env` 里的 `OPENAI_MODEL` 作为模型名、读取 `OPENAI_REASONING_EFFORT` 作为思考强度；只有你显式传了 `--model` 或 `--reasoning-effort` 时才会覆盖这些值。不传思考强度时，会继续使用服务端默认值。
 
 如果要显式指定会话槽位，可以补：
 

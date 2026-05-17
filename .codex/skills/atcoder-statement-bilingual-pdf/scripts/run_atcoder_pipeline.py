@@ -35,6 +35,11 @@ def parse_args() -> argparse.Namespace:
         help="Model used by the openai provider. Default uses OPENAI_MODEL or gpt-4.",
     )
     parser.add_argument(
+        "--reasoning-effort",
+        default="",
+        help="Reasoning effort used by the openai provider. Default uses OPENAI_REASONING_EFFORT or model default.",
+    )
+    parser.add_argument(
         "--api-mode",
         default="responses",
         choices=["responses", "chat"],
@@ -197,9 +202,14 @@ def main() -> None:
         api_mode = translate_markdown.resolve_openai_api_mode(args)
         base_url = translate_markdown.resolve_openai_base_url(args, api_mode)
         model = translate_markdown.resolve_openai_model(args)
+        reasoning_effort = translate_markdown.resolve_openai_reasoning_effort(args)
         print(f"[pipeline] api_mode={api_mode}")
         print(f"[pipeline] base_url={base_url}")
         print(f"[pipeline] model={model}")
+        print(
+            "[pipeline] reasoning_effort="
+            + (reasoning_effort if reasoning_effort else "<provider-default>")
+        )
     print(f"[pipeline] auth_mode={args.auth_mode}")
     if args.auth_mode == "session":
         print(
@@ -243,6 +253,7 @@ def main() -> None:
     translator_args = argparse.Namespace(
         provider=args.provider,
         model=args.model,
+        reasoning_effort=args.reasoning_effort,
         api_mode=args.api_mode,
         api_key_env=args.api_key_env,
         base_url=args.base_url,

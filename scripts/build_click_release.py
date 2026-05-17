@@ -165,6 +165,7 @@ def release_config_text() -> str:
     "enabled": true,
     "provider": "openai",
     "model": "",
+    "reasoning_effort": "",
     "api_mode": "chat",
     "base_url": "",
     "timeout": 30,
@@ -193,6 +194,7 @@ def release_config_text() -> str:
 def env_example_text() -> str:
     return """OPENAI_API_KEY=
 OPENAI_MODEL=
+OPENAI_REASONING_EFFORT=
 OPENAI_API_MODE=chat
 OPENAI_BASE_URL=
 """
@@ -202,7 +204,7 @@ def readme_text() -> str:
     return """AtCoder 便携执行包
 
 快速开始
-1. 将 `.env.example` 复制为 `.env`，并填写 `OPENAI_API_KEY`；如需统一指定模型，再填写 `OPENAI_MODEL`。
+1. 将 `.env.example` 复制为 `.env`，并填写 `OPENAI_API_KEY`；如需统一指定模型或思考强度，再填写 `OPENAI_MODEL`、`OPENAI_REASONING_EFFORT`。
 2. 确认本机浏览器（如 Chrome 或 Edge）里已经登录 AtCoder。
 3. 双击 `run.bat`，然后输入比赛编号，例如 `abc457`。
 
@@ -220,6 +222,7 @@ def readme_text() -> str:
 - 默认输出目录是 `output/`。
 - 可编辑配置文件是 `scripts/atcoder_delivery.release.json`。
 - 如果 `scripts/atcoder_delivery.release.json` 中的 `statement.model` 留空，则会继承 `.env` 里的 `OPENAI_MODEL`。
+- 如果 `scripts/atcoder_delivery.release.json` 中的 `statement.reasoning_effort` 留空，则会继承 `.env` 里的 `OPENAI_REASONING_EFFORT`。
 
 包内已经包含
 - Python 运行时
