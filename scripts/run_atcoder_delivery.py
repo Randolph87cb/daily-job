@@ -41,7 +41,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "require_markdown": False,
     },
     "editorial_generation": {
-        "enabled": False,
+        "enabled": True,
         "problem_ids": [],
         "model": "gpt-4",
         "api_mode": "chat",

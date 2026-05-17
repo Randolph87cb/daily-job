@@ -29,7 +29,7 @@
     "require_markdown": false
   },
   "editorial_generation": {
-    "enabled": false,
+    "enabled": true,
     "problem_ids": [],
     "model": "gpt-4",
     "api_mode": "chat",

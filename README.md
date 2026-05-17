@@ -44,7 +44,7 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase editorial-generate
 python .\scripts\run_atcoder_delivery.py abc450 --phase all
 ```
 
-- 默认配置文件是 `scripts/atcoder_delivery.example.json`。
+- 默认配置文件是 `scripts/atcoder_delivery.example.json`，当前默认开启完整流程：题面抓取翻译、自动题解生成、题解导出都会参与 `--phase all`。
 - `statement` 阶段会调用现有题面抓取翻译 pipeline。
 - `editorial-generate` 阶段会调用自动题解脚本：按单题逐次请求模型 API，抽取 `cpp` 代码，编译运行样例；失败时把样例检测结果回灌给下一次请求，直到通过或达到重试上限。
 - `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
@@ -52,7 +52,7 @@ python .\scripts\run_atcoder_delivery.py abc450 --phase all
 - 统一入口支持命令行覆盖：
   - `--with-pdf` / `--no-pdf`
   - `--overwrite` / `--no-overwrite`
-- 如果要启用自动题解生成，需要在配置文件里打开 `editorial_generation.enabled`；可选配置包括：
+- 自动题解生成当前默认已启用；如需关闭或改参数，可在配置文件里调整 `editorial_generation`。常用配置包括：
   - `problem_ids`
   - `model`
   - `api_mode`
