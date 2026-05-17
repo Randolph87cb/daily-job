@@ -41,6 +41,7 @@ npm install
   - `OPENAI_API_KEY`
   - `OPENAI_API_MODE=chat`
   - `OPENAI_BASE_URL=...`
+  - 如需统一指定模型，额外设置 `OPENAI_MODEL=...`
 - 本机已可调用：
   - `python`
   - `node`
@@ -120,6 +121,8 @@ python "$skillRoot\scripts\run_atcoder_pipeline.py" abc456
 - `--overwrite`
 - `--output-format bilingual`
 - `--export-pdf`
+
+默认情况下，`run_atcoder_pipeline.py` 和底层 `translate_markdown.py` 会优先读取 `.env` 里的 `OPENAI_MODEL` 作为模型名；只有你显式传了 `--model` 时才会覆盖该值。
 
 如果要显式指定会话槽位，可以补：
 

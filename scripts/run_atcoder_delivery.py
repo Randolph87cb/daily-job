@@ -18,7 +18,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "statement": {
         "enabled": True,
         "provider": "openai",
-        "model": "gpt-4",
+        "model": "",
         "api_mode": "chat",
         "base_url": "",
         "timeout": 30,
@@ -43,7 +43,7 @@ DEFAULT_CONFIG: dict[str, Any] = {
     "editorial_generation": {
         "enabled": True,
         "problem_ids": [],
-        "model": "gpt-4",
+        "model": "",
         "api_mode": "chat",
         "base_url": "",
         "max_attempts": 3,
@@ -238,6 +238,10 @@ def load_dotenv_values(env_file: Path) -> dict[str, str]:
 
 def command_exists(command_name: str) -> bool:
     return bool(shutil.which(command_name))
+
+
+def normalized_model_override(value: Any) -> str:
+    return str(value).strip() if value is not None else ""
 
 
 def pick_powershell_command(preferred: str) -> str:
@@ -441,8 +445,6 @@ def build_statement_command(
         str(workspace_dir),
         "--provider",
         str(statement["provider"]),
-        "--model",
-        str(statement["model"]),
         "--api-mode",
         str(statement["api_mode"]),
         "--env-file",
@@ -454,6 +456,10 @@ def build_statement_command(
         "--output-format",
         str(statement["output_format"]),
     ]
+
+    model_override = normalized_model_override(statement.get("model"))
+    if model_override:
+        command.extend(["--model", model_override])
 
     base_url = str(statement["base_url"]).strip()
     if base_url:
@@ -512,8 +518,6 @@ def build_translation_resume_command(
         str(chinese_dir),
         "--provider",
         str(statement["provider"]),
-        "--model",
-        str(statement["model"]),
         "--api-mode",
         str(statement["api_mode"]),
         "--env-file",
@@ -521,6 +525,10 @@ def build_translation_resume_command(
         "--output-format",
         str(statement["output_format"]),
     ]
+
+    model_override = normalized_model_override(statement.get("model"))
+    if model_override:
+        command.extend(["--model", model_override])
 
     base_url = str(statement["base_url"]).strip()
     if base_url:
@@ -571,8 +579,6 @@ def build_editorial_generation_command(
         str(editorial_dir),
         "--env-file",
         str(env_file),
-        "--model",
-        str(editorial_generation["model"]),
         "--api-mode",
         str(editorial_generation["api_mode"]),
         "--max-attempts",
@@ -586,6 +592,10 @@ def build_editorial_generation_command(
         "--run-timeout",
         str(editorial_generation["run_timeout"]),
     ]
+
+    model_override = normalized_model_override(editorial_generation.get("model"))
+    if model_override:
+        command.extend(["--model", model_override])
 
     base_url = str(editorial_generation["base_url"]).strip()
     if base_url:

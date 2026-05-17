@@ -68,6 +68,7 @@
 - 项目级 AtCoder 交付编排入口放在根目录 `scripts/`，当前统一入口为 `scripts/run_atcoder_delivery.py`。
 - 这个入口负责串起题面抓取翻译、题解导出和预检查；它是未来对外打包、服务器定时执行或改造成独立程序时的优先复用边界。
 - 当前统一入口还支持 `editorial-generate` 阶段，用于按单题请求模型生成题解、编译运行样例、失败后附样例检测结果重试。
+- AtCoder 相关脚本的模型选择统一优先读取 `.env` 中的 `OPENAI_MODEL`；只有配置文件里的 `statement.model`、`editorial_generation.model` 或命令行 `--model` 显式填写时，才允许覆盖这个统一值。
 - 如果修改了 `scripts/build_click_release.py` 生成的发布目录结构、启动器名称、默认鉴权方式或 bundled runtime 组织方式，也视为项目正式交付边界变更，需要同步更新相关文档和说明。
 - 如果调整了统一入口或发布包的默认性能策略，例如：
   - 是否默认导出 PDF

@@ -20,6 +20,7 @@ MATH_PATTERN = re.compile(r"\$[^$\n]+\$")
 URL_PATTERN = re.compile(r"https?://[^\s)]+")
 INLINE_CODE_WRAPPED_MATH_PATTERN = re.compile(r"`(\$[^`\n$][^`\n]*?\$)`")
 FENCED_BLOCK_PATTERN = re.compile(r"```[^\n]*\n([\s\S]*?)\n```")
+DEFAULT_OPENAI_MODEL = "gpt-4"
 
 
 class TranslationError(RuntimeError):
@@ -85,8 +86,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="gpt-4",
-        help="Model used by the openai provider. Default: gpt-4",
+        default="",
+        help="Model used by the openai provider. Default uses OPENAI_MODEL or gpt-4.",
     )
     parser.add_argument(
         "--api-mode",
@@ -190,6 +191,15 @@ def resolve_openai_base_url(args: argparse.Namespace, api_mode: str) -> str:
     if env_base_url:
         return env_base_url
     return default_base_url(api_mode)
+
+
+def resolve_openai_model(args: argparse.Namespace) -> str:
+    if args.model.strip():
+        return args.model.strip()
+    env_model = os.environ.get("OPENAI_MODEL", "").strip()
+    if env_model:
+        return env_model
+    return DEFAULT_OPENAI_MODEL
 
 
 def apply_phrase_map(text: str, phrase_map: dict[str, str]) -> str:
@@ -951,6 +961,7 @@ def create_translator(args: argparse.Namespace, glossary: Glossary) -> Translato
         return RuleBasedTranslator(glossary)
 
     api_mode = resolve_openai_api_mode(args)
+    model = resolve_openai_model(args)
     api_key = os.environ.get(args.api_key_env, "").strip()
     if not api_key:
         raise TranslationError(
@@ -959,7 +970,7 @@ def create_translator(args: argparse.Namespace, glossary: Glossary) -> Translato
     base_url = resolve_openai_base_url(args, api_mode)
     return OpenAITranslator(
         glossary=glossary,
-        model=args.model,
+        model=model,
         api_key=api_key,
         api_mode=api_mode,
         base_url=base_url,
@@ -1141,9 +1152,10 @@ def main() -> None:
     if args.provider == "openai":
         api_mode = resolve_openai_api_mode(args)
         base_url = resolve_openai_base_url(args, api_mode)
+        model = resolve_openai_model(args)
         print(f"[translate] api_mode={api_mode}")
         print(f"[translate] base_url={base_url}")
-        print(f"[translate] model={args.model}")
+        print(f"[translate] model={model}")
     pdf_output_dir = args.pdf_output_dir or args.output_dir
     if args.export_pdf:
         print(f"[translate] pdf_output_dir={pdf_output_dir}")

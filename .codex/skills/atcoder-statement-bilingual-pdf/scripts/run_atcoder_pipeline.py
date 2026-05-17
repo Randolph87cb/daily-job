@@ -31,8 +31,8 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--model",
-        default="gpt-4",
-        help="Model used by the openai provider. Default: gpt-4",
+        default="",
+        help="Model used by the openai provider. Default uses OPENAI_MODEL or gpt-4.",
     )
     parser.add_argument(
         "--api-mode",
@@ -196,9 +196,10 @@ def main() -> None:
     if args.provider == "openai":
         api_mode = translate_markdown.resolve_openai_api_mode(args)
         base_url = translate_markdown.resolve_openai_base_url(args, api_mode)
+        model = translate_markdown.resolve_openai_model(args)
         print(f"[pipeline] api_mode={api_mode}")
         print(f"[pipeline] base_url={base_url}")
-        print(f"[pipeline] model={args.model}")
+        print(f"[pipeline] model={model}")
     print(f"[pipeline] auth_mode={args.auth_mode}")
     if args.auth_mode == "session":
         print(
