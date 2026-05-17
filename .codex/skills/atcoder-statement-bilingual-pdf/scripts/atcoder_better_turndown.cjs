@@ -33,6 +33,13 @@ function normalizeMathText(text) {
     .trim();
 }
 
+function normalizePreText(text) {
+  return (text || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+}
+
 function extractLatexText(node) {
   if (!node || typeof node.querySelector !== "function") {
     return normalizeMathText(node?.textContent || "");
@@ -42,6 +49,39 @@ function extractLatexText(node) {
     return normalizeMathText(annotationText);
   }
   return normalizeMathText(node.textContent || "");
+}
+
+function renderPreNode(node) {
+  if (!node) {
+    return "";
+  }
+
+  if (node.nodeType === 3) {
+    return normalizePreText(node.nodeValue || "");
+  }
+
+  if (node.nodeType !== 1) {
+    return "";
+  }
+
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "br") {
+    return "\n";
+  }
+  if (tagName === "var") {
+    const latex = extractLatexText(node);
+    return latex ? `$${latex}$` : "";
+  }
+  if (tagName === "span" && node.classList?.contains("katex")) {
+    const latex = extractLatexText(node);
+    return latex ? `$${latex}$` : "";
+  }
+  if (tagName === "span" && node.classList?.contains("katex-display")) {
+    const latex = extractLatexText(node);
+    return latex ? `$$${latex}$$` : "";
+  }
+
+  return Array.from(node.childNodes || []).map(renderPreNode).join("");
 }
 
 function createTurndownService(document) {
@@ -110,7 +150,7 @@ function createTurndownService(document) {
       if (node.classList.contains("source-code-for-copy") || node.classList.contains("prettyprint")) {
         return "";
       }
-      const body = content.replace(/\n+$/, "");
+      const body = renderPreNode(node).replace(/\n+$/, "");
       return `\n\`\`\`text\n${body}\n\`\`\`\n`;
     },
   });

@@ -33,6 +33,57 @@ function normalizeMathText(text) {
     .trim();
 }
 
+function normalizePreText(text) {
+  return (text || "")
+    .replace(/\u00a0/g, " ")
+    .replace(/\r\n/g, "\n")
+    .replace(/\r/g, "\n");
+}
+
+function extractLatexText(node) {
+  if (!node || typeof node.querySelector !== "function") {
+    return normalizeMathText(node?.textContent || "");
+  }
+  const annotationText = node.querySelector("annotation")?.textContent;
+  if (annotationText && annotationText.trim()) {
+    return normalizeMathText(annotationText);
+  }
+  return normalizeMathText(node.textContent || "");
+}
+
+function renderPreNode(node) {
+  if (!node) {
+    return "";
+  }
+
+  if (node.nodeType === 3) {
+    return normalizePreText(node.nodeValue || "");
+  }
+
+  if (node.nodeType !== 1) {
+    return "";
+  }
+
+  const tagName = node.tagName.toLowerCase();
+  if (tagName === "br") {
+    return "\n";
+  }
+  if (tagName === "var") {
+    const latex = extractLatexText(node);
+    return latex ? `$${latex}$` : "";
+  }
+  if (tagName === "span" && node.classList?.contains("katex")) {
+    const latex = extractLatexText(node);
+    return latex ? `$${latex}$` : "";
+  }
+  if (tagName === "span" && node.classList?.contains("katex-display")) {
+    const latex = extractLatexText(node);
+    return latex ? `$$${latex}$$` : "";
+  }
+
+  return Array.from(node.childNodes || []).map(renderPreNode).join("");
+}
+
 function createTurndownService(document) {
   const turndownService = new TurndownService({ bulletListMarker: "-" });
 
@@ -63,27 +114,27 @@ function createTurndownService(document) {
       return node.nodeName === "VAR";
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.textContent);
+      const latex = extractLatexText(node);
       return latex ? `$${latex}$` : "";
     },
   });
 
   turndownService.addRule("inline-math", {
     filter(node) {
-      return node.tagName && node.tagName.toLowerCase() === "span" && node.className === "katex";
+      return node.tagName && node.tagName.toLowerCase() === "span" && node.classList?.contains("katex");
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.querySelector("annotation")?.textContent);
+      const latex = extractLatexText(node);
       return latex ? `$${latex}$` : "";
     },
   });
 
   turndownService.addRule("block-math", {
     filter(node) {
-      return node.tagName && node.tagName.toLowerCase() === "span" && node.className === "katex-display";
+      return node.tagName && node.tagName.toLowerCase() === "span" && node.classList?.contains("katex-display");
     },
     replacement(content, node) {
-      const latex = normalizeMathText(node.querySelector("annotation")?.textContent);
+      const latex = extractLatexText(node);
       if (!latex) {
         return "";
       }
@@ -99,7 +150,7 @@ function createTurndownService(document) {
       if (node.classList.contains("source-code-for-copy") || node.classList.contains("prettyprint")) {
         return "";
       }
-      const body = content.replace(/\n+$/, "");
+      const body = renderPreNode(node).replace(/\n+$/, "");
       return `\n\`\`\`text\n${body}\n\`\`\`\n`;
     },
   });
