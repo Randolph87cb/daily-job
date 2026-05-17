@@ -6,5 +6,6 @@
 **/*.pyc
 **/node_modules/
 **/*.log
+**/editorials/.validation/
 Thumbs.db
 desktop.ini

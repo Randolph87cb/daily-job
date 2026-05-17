@@ -10,6 +10,7 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
 - 先同步规则，再改单题 Markdown，再重导出，再验证，再更新工作记录。
 - 题解正文与参考实现规范统一复用全局 skill `algorithm-editorial-reference`，不要在本 skill 目录下重复维护一份本地规范。
 - 批量导出优先使用 `scripts/export-editorials.ps1`，不要每次临时拼一套 `md2pdf` 命令。
+- 现在额外提供 `scripts/generate_editorials.py`，用于按单题调用模型 API 自动生成题解，并在本地编译运行样例；失败时会附上样例检测结果重试。
 - 默认基于当前仓库里的题面 Markdown、本地样例题解与全局规范完成题解；除非用户明确要求，否则不要使用网络搜索补题解。
 - 在委派模式下，主线程负责拆分任务、统一导出、最终验证、工作记录与 Git；subagent 只负责自己名下的题解 Markdown，不要自行执行 `git add`、`git commit`、`git push`。
 
@@ -27,19 +28,45 @@ description: 处理 AtCoder 题解 Markdown 的撰写、批量格式调整和导
    - 全局 skill `algorithm-editorial-reference` 的对应规范文档或说明
    - 本 skill 下与项目流程有关的说明文档，例如 `references/workflow.md`
 3. 再修改单题题解 Markdown，不要先导出后回头补正文。
-4. 单题题解改完后，运行 `scripts/export-editorials.ps1` 重生成：
+4. 如果用户希望自动生成题解，先运行 `scripts/generate_editorials.py`：
+   - 单题只请求一次模型；
+   - 若样例编译或运行失败，则把检测结果回灌给下一次请求；
+   - 只有样例全部通过后才写回 `*.editorial.md`。
+5. 单题题解改完后，运行 `scripts/export-editorials.ps1` 重生成：
    - 单题 PDF
    - 合并版 Markdown
    - 合并版 PDF
-5. 导出前至少抽查 `1` 篇复杂题题解，确认参考实现不是“零注释核心代码”，并且代码注释能和正文思路段落对应。
-6. 导出后检查标题、合并版同步情况和 PDF 产物。
-7. 最后更新：
+6. 导出前至少抽查 `1` 篇复杂题题解，确认参考实现不是“零注释核心代码”，并且代码注释能和正文思路段落对应。
+7. 导出后检查标题、合并版同步情况和 PDF 产物。
+8. 最后更新：
    - `AI工作记录/records/YYYY/MM/*.md`
    - 如有流程沉淀变化，再更新 `AI工作记录/skill-backlog.md`
-8. 如果使用委派模式：
+9. 如果使用委派模式：
    - 先按题目或文件划分不重叠 ownership，再下发 subagent。
    - subagent 只改自己负责的 `*.editorial.md`，不要顺手改导出脚本、其他题解或 Git 状态。
    - 汇总、导出、抽查、提交与推送统一由主线程执行。
+
+## 导出
+
+## 自动生成
+
+在仓库根目录执行：
+
+```powershell
+python ".\.codex\skills\atcoder-editorial-workflow\scripts\generate_editorials.py" abc458 `
+  --problem a `
+  --workspace ".\atcoder-output"
+```
+
+- 默认从 `atcoder-output/<contest>/en/*.en.md` 读取英文题面。
+- 默认使用 `.env` 中的：
+  - `OPENAI_API_KEY`
+  - `OPENAI_API_MODE`
+  - `OPENAI_BASE_URL`
+- 默认每题最多重试 `3` 次。
+- 每次失败后，会把编译错误或样例对比结果写到：
+  - `atcoder-output/<contest>/editorials/.validation/<contest>_<problem>.sample-check.md`
+- 只有样例全部通过，才会覆盖对应的 `*.editorial.md`。
 
 ## 导出
 
@@ -69,5 +96,7 @@ pwsh -NoProfile -ExecutionPolicy Bypass -File ".\.codex\skills\atcoder-editorial
 
 ### scripts/
 
+- `scripts/generate_editorials.py`
+  - 自动生成单题题解，提取 `cpp` 代码并执行样例编译运行校验。
 - `scripts/export-editorials.ps1`
   - 批量重建 `editorials/` 目录下的单题 PDF、合并版 Markdown 和合并版 PDF。

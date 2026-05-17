@@ -30,7 +30,7 @@
 - `AI工作记录/` 保存当前项目的任务摘要、关键决策、验证结果和 skill 沉淀线索。
 - `scripts/` 保存项目级包装脚本；当前提供 `run_atcoder_delivery.py` 作为 AtCoder 题面抓取与题解导出的统一入口，也是后续打包成独立程序时优先复用的编排层。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
-- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。整合版产物统一使用中文文件名，例如 `abc458题面中英文对照.md`、`abc458题面中英文对照.pdf`、`abc458题解.md`、`abc458题解.pdf`。
+- `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。整合版产物统一使用中文文件名，例如 `abc458题面中英文对照.md`、`abc458题面中英文对照.pdf`、`abc458题解.md`、`abc458题解.pdf`。自动题解脚本的样例校验报告默认写到 `editorials/.validation/`，该目录属于运行产物，默认忽略入库。
 - `签到表/` 与 `课时统计/` 保存实际业务 Excel 素材。
 
 ## AtCoder 统一入口
@@ -40,16 +40,28 @@
 ```powershell
 python .\scripts\run_atcoder_delivery.py abc450 --phase precheck
 python .\scripts\run_atcoder_delivery.py abc450 --phase statement
+python .\scripts\run_atcoder_delivery.py abc450 --phase editorial-generate
 python .\scripts\run_atcoder_delivery.py abc450 --phase all
 ```
 
 - 默认配置文件是 `scripts/atcoder_delivery.example.json`。
 - `statement` 阶段会调用现有题面抓取翻译 pipeline。
+- `editorial-generate` 阶段会调用自动题解脚本：按单题逐次请求模型 API，抽取 `cpp` 代码，编译运行样例；失败时把样例检测结果回灌给下一次请求，直到通过或达到重试上限。
 - `editorials` 阶段会在 `atcoder-output/<contest>/editorials/` 下存在 `*.editorial.md` 时才执行导出。
 - 这个入口当前仍然复用仓库内现有脚本与依赖；如果后续要发给没有 Codex 的用户，优先围绕这个入口继续打包，而不是直接暴露 skill。
 - 统一入口支持命令行覆盖：
   - `--with-pdf` / `--no-pdf`
   - `--overwrite` / `--no-overwrite`
+- 如果要启用自动题解生成，需要在配置文件里打开 `editorial_generation.enabled`；可选配置包括：
+  - `problem_ids`
+  - `model`
+  - `api_mode`
+  - `base_url`
+  - `max_attempts`
+  - `compiler`
+  - `cpp_standard`
+  - `compile_timeout`
+  - `run_timeout`
 
 如果要生成一份本地“点击即用”的便携发布目录，可执行：
 

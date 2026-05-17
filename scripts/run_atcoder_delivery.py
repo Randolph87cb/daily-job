@@ -40,6 +40,19 @@ DEFAULT_CONFIG: dict[str, Any] = {
         "dir_template": "atcoder-output/{contest}/editorials",
         "require_markdown": False,
     },
+    "editorial_generation": {
+        "enabled": False,
+        "problem_ids": [],
+        "model": "gpt-4",
+        "api_mode": "chat",
+        "base_url": "",
+        "max_attempts": 3,
+        "compiler": "g++",
+        "cpp_standard": "gnu++14",
+        "compile_timeout": 30,
+        "run_timeout": 5,
+        "overwrite": True,
+    },
 }
 
 
@@ -60,7 +73,7 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "--phase",
-        choices=["precheck", "statement", "editorials", "all"],
+        choices=["precheck", "statement", "editorial-generate", "editorials", "all"],
         default="all",
         help="Which phase to run. Default: all",
     )
@@ -137,6 +150,17 @@ def editorial_script_path() -> Path:
         / "atcoder-editorial-workflow"
         / "scripts"
         / "export-editorials.ps1"
+    )
+
+
+def editorial_generation_script_path() -> Path:
+    return (
+        repo_root()
+        / ".codex"
+        / "skills"
+        / "atcoder-editorial-workflow"
+        / "scripts"
+        / "generate_editorials.py"
     )
 
 
@@ -241,6 +265,10 @@ def phase_needs_editorials(phase: str, config: dict[str, Any]) -> bool:
     return phase in {"editorials", "all"} and bool(config["editorials"]["enabled"])
 
 
+def phase_needs_editorial_generation(phase: str, config: dict[str, Any]) -> bool:
+    return phase in {"editorial-generate", "all"} and bool(config["editorial_generation"]["enabled"])
+
+
 def resolve_editorial_dir(
     contest: str,
     config: dict[str, Any],
@@ -287,6 +315,7 @@ def validate_prerequisites(
     }
     statement_enabled = phase_needs_statement(phase, config)
     editorials_enabled = phase_needs_editorials(phase, config)
+    editorial_generation_enabled = phase_needs_editorial_generation(phase, config)
     env_file = resolve_path(config["env_file"], base_dir=base_dir)
     summary["env_file"] = env_file
 
@@ -353,6 +382,36 @@ def validate_prerequisites(
                 )
             summary["warnings"].append(
                 f"题解目录当前没有 `*.editorial.md`，导出阶段将自动跳过：{editorial_dir}"
+            )
+
+    if editorial_generation_enabled:
+        python_command = str(config["python_command"]).strip() or "python"
+        if not command_exists(python_command):
+            raise DeliveryConfigError(f"Python command not found in PATH: {python_command}")
+        if not editorial_generation_script_path().is_file():
+            raise DeliveryConfigError(
+                f"Missing editorial generation script: {editorial_generation_script_path()}"
+            )
+        if not command_exists(str(config["editorial_generation"]["compiler"]).strip() or "g++"):
+            raise DeliveryConfigError(
+                "Editorial generation compiler not found in PATH: "
+                f"{config['editorial_generation']['compiler']}"
+            )
+        english_dir, _ = statement_dirs(contest, config, base_dir)
+        summary["editorial_generation_statement_dir"] = english_dir
+        if not english_dir.is_dir():
+            raise DeliveryConfigError(
+                "Editorial generation requires English statements, but directory is missing: "
+                f"{english_dir}"
+            )
+        if not english_markdown_files(english_dir):
+            raise DeliveryConfigError(
+                f"Editorial generation found no English statement markdown in: {english_dir}"
+            )
+        dotenv_values = load_dotenv_values(env_file)
+        if "OPENAI_API_KEY" not in os.environ and "OPENAI_API_KEY" not in dotenv_values:
+            raise DeliveryConfigError(
+                "OPENAI_API_KEY is missing from both the current environment and the env file."
             )
 
     return summary
@@ -487,6 +546,56 @@ def build_editorial_command(
     ]
 
 
+def build_editorial_generation_command(
+    *,
+    contest: str,
+    config: dict[str, Any],
+    base_dir: Path,
+    editorial_dir: Path,
+) -> list[str]:
+    env_file = resolve_path(config["env_file"], base_dir=base_dir)
+    editorial_generation = config["editorial_generation"]
+    command = [
+        str(config["python_command"]).strip() or "python",
+        str(editorial_generation_script_path()),
+        contest,
+        "--workspace",
+        str(resolve_path(config["workspace_dir"], base_dir=base_dir)),
+        "--editorial-dir",
+        str(editorial_dir),
+        "--env-file",
+        str(env_file),
+        "--model",
+        str(editorial_generation["model"]),
+        "--api-mode",
+        str(editorial_generation["api_mode"]),
+        "--max-attempts",
+        str(editorial_generation["max_attempts"]),
+        "--compiler",
+        str(editorial_generation["compiler"]),
+        "--cpp-standard",
+        str(editorial_generation["cpp_standard"]),
+        "--compile-timeout",
+        str(editorial_generation["compile_timeout"]),
+        "--run-timeout",
+        str(editorial_generation["run_timeout"]),
+    ]
+
+    base_url = str(editorial_generation["base_url"]).strip()
+    if base_url:
+        command.extend(["--base-url", base_url])
+
+    if editorial_generation["overwrite"]:
+        command.append("--overwrite")
+    else:
+        command.append("--no-overwrite")
+
+    for problem_id in editorial_generation.get("problem_ids", []):
+        command.extend(["--problem", str(problem_id)])
+
+    return command
+
+
 def run_command(command: list[str], *, cwd: Path, dry_run: bool) -> None:
     log("command=" + subprocess.list2cmdline(command))
     if dry_run:
@@ -548,6 +657,16 @@ def main() -> None:
                 base_dir=base_dir,
             )
         run_command(statement_command, cwd=repo_root(), dry_run=args.dry_run)
+
+    if phase_needs_editorial_generation(args.phase, config):
+        log("phase=editorial-generate")
+        generation_command = build_editorial_generation_command(
+            contest=contest,
+            config=config,
+            base_dir=base_dir,
+            editorial_dir=editorial_dir,
+        )
+        run_command(generation_command, cwd=repo_root(), dry_run=args.dry_run)
 
     if phase_needs_editorials(args.phase, config):
         files = editorial_markdown_files(editorial_dir)

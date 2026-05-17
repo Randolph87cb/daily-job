@@ -5,6 +5,7 @@
 本 skill 面向当前项目中算法题题解的这一类任务：
 
 - 新增单题题解 Markdown
+- 按单题调用模型自动生成题解并做样例校验
 - 批量修改题解章节标题、固定结构、公式写法
 - 统一参考实现风格
 - 从 `editorials/` 目录重导单题 PDF、合并版 Markdown、合并版 PDF
@@ -37,6 +38,29 @@ atcoder-output/<contest>/editorials/
 - 修改固定章节标题
 - 调整数学公式写法
 - 调整数组 / `vector` / 全局数组偏好
+
+## 2.5 自动生成脚本
+
+当前 workflow 提供：
+
+- `scripts/generate_editorials.py`
+
+这个脚本负责：
+
+- 从 `atcoder-output/<contest>/en/*.en.md` 读取单题英文题面
+- 按单题请求一次模型 API 生成题解
+- 从返回 Markdown 中提取 `cpp` 代码
+- 本地编译并运行题面样例
+- 如果编译失败或样例不通过，把检测结果附给下一次请求
+- 只有全部样例通过后，才覆盖对应的 `*.editorial.md`
+
+默认样例校验报告输出到：
+
+```text
+atcoder-output/<contest>/editorials/.validation/<contest>_<problem>.sample-check.md
+```
+
+这类文件属于运行产物，不参与导出，也默认不应提交。
 
 ## 3. 当前稳定下来的题解要求
 
@@ -92,6 +116,14 @@ atcoder-output/<contest>/editorials/
 ## 5. 导出规则
 
 使用 `scripts/export-editorials.ps1`，不要临时重拼一套导出命令。
+
+如果需要先自动生成题解，推荐先执行：
+
+```powershell
+python ".\.codex\skills\atcoder-editorial-workflow\scripts\generate_editorials.py" abc458 `
+  --problem a `
+  --workspace ".\atcoder-output"
+```
 
 推荐调用方式：
 
