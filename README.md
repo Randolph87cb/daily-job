@@ -18,6 +18,7 @@
 ├─ scripts/                                    # 项目级统一入口与对外打包基础脚本
 ├─ atcoder-arc218/                             # AtCoder 脚本实验目录与参考文档
 ├─ atcoder-output/                             # 比赛题面抓取、翻译、PDF 与题解输出
+├─ windows-student-guard/                      # 学生机/机房机 Windows 设置脚本与说明
 ├─ 签到表/                                      # 月度签到表 Excel
 ├─ 课时统计/                                    # 课时统计表与历史月份数据
 ├─ AGENTS.md                                   # 项目协作规则
@@ -31,6 +32,7 @@
 - `scripts/` 保存项目级包装脚本；当前提供 `run_atcoder_delivery.py` 作为 AtCoder 题面抓取与题解导出的统一入口，也是后续打包成独立程序时优先复用的编排层。
 - `atcoder-arc218/` 保留 AtCoder 相关脚本、样例和说明文档，适合继续开发或验证流程。
 - `atcoder-output/` 保存比赛输出结果，通常按 `比赛 ID / 语言或流水线目录` 组织；单场目录下可包含英文题面、双语题面、PDF，以及 `editorials/` 中的题解 Markdown、单题 PDF、合并 Markdown 和合并 PDF。整合版产物统一使用中文文件名，例如 `abc458题面中英文对照.md`、`abc458题面中英文对照.pdf`、`abc458题解.md`、`abc458题解.pdf`。自动题解脚本的样例校验报告默认写到 `editorials/.validation/`，该目录属于运行产物，默认忽略入库。
+- `windows-student-guard/` 保存学生机/机房机的 Windows 设置脚本，当前用于统一任务栏、触摸板、鼠标速度、鼠标指针和显示分辨率等默认基线；脚本运行产生的 `backups/` 目录属于可再生成日志，不入库。
 - `签到表/` 与 `课时统计/` 保存实际业务 Excel 素材。
 
 ## AtCoder 统一入口

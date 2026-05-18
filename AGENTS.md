@@ -6,6 +6,7 @@
   - 课时与签到相关 Excel 素材
   - 项目内 Codex skills
   - AtCoder 题面抓取、翻译与导出脚本
+  - 学生机/机房机 Windows 设置脚本
   - 运行产物、工作记录与后续沉淀
 
 ## 项目目录结构
@@ -34,6 +35,11 @@
 │     ├─ en/
 │     ├─ zh-CN/
 │     └─ editorials/
+├─ windows-student-guard/
+│  ├─ Set-StudentSafeDefaults.ps1
+│  ├─ Run-Set-StudentSafeDefaults.cmd
+│  ├─ README.md
+│  └─ backups/
 ├─ 签到表/
 └─ 课时统计/
 ```
@@ -46,6 +52,7 @@
   - 受影响子项目自己的文档，例如 `atcoder-arc218/README.md` 或相关 skill 文档
 - 如果只是临时调试，不修改正式结构；如果新增了会长期保留的目录，必须补进目录结构说明。
 - 更新目录结构时，文档里的路径、示例命令、输出位置说明要一起校对，不允许只改代码不改文档。
+- `windows-student-guard/backups/` 属于脚本运行日志目录，默认视为可再生成产物；如果调整其位置或命名规则，要同步更新 `README.md`、当前文件和 `.gitignore`。
 
 ## AtCoder 题解产物约定
 

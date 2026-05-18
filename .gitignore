@@ -7,5 +7,6 @@
 **/node_modules/
 **/*.log
 **/editorials/.validation/
+windows-student-guard/backups/
 Thumbs.db
 desktop.ini
